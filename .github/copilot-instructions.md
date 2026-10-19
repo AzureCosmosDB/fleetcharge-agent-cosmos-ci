@@ -43,7 +43,7 @@
 - Do not bypass the framework in CI, mock the agent's final response, or replace the Cosmos repository with an in-memory fake in integration tests.
 - Keep battery rules, maintenance exclusion, scheduling checks, evidence validation, and idempotency in application code, not model prose. Validate tool inputs and model-proposed writes before persistence.
 - Fail explicitly on unknown tools, invalid arguments, unexpected scripted turns, exhausted scripts, and tool-loop limits. Never fall back silently to a live model.
-- Optional Ollama mode uses an explicitly selected, installed local tool-capable model and the same guarded tools. Do not download models automatically, use hosted/cloud inference, or silently substitute scripted output. Required CI must not require the optional model/provider.
+- Optional Ollama mode uses an explicitly selected, installed local model and the same guarded tools. Use schema-constrained JSON proposals, not unreliable native `tool_choice`; validate proposals before framework dispatch and retain source/partition/write guards. The bounded `fleetcharge-phi3.5:latest` alias is verified. Do not download models automatically, use hosted/cloud inference, or silently substitute scripted output. Required CI must not require the optional model/provider.
 - Verify the selected framework version's client/tool APIs in official documentation and pin compatible dependencies when implementation adds a manifest. Do not assume the outline's `ModelPlanner` pseudocode is a framework API.
 
 ## Cosmos DB and deterministic behavior

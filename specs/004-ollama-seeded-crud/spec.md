@@ -17,7 +17,7 @@ gate's no-live-model contract.
 - **FR-003**: Explicit optional Ollama mode must use Microsoft Agent Framework
   and the same seven guarded tools, repository, fleet rules and audit validation.
   It must never fall back to scripted success. Required CI stays scripted.
-- **FR-004**: The live test must use an already installed local tool-capable
+- **FR-004**: The live test must use an already installed local JSON-capable
   model and seeded golden data, verify the 11-minute recommendation and evidence,
   independently read/query the persisted output, update it by reviewing changed
   telemetry, and delete it with an independently verified not-found result.
@@ -30,8 +30,10 @@ gate's no-live-model contract.
 
 ## Boundaries
 
-The model chooses tool calls and arguments; deterministic code still computes and
-validates charging decisions. This is a constrained tool-using agent smoke test,
+The backend exposes the next valid tool and constrains request identities; the
+real model generates schema-constrained tool-call proposals and arguments.
+The adapter validates their structure before framework dispatch; deterministic
+code still computes and validates charging decisions. This is a constrained tool-using agent smoke test,
 not a broad model benchmark. CRUD operations are test-side SDK assertions, not
 new destructive agent tools or public API endpoints. No production resources,
 new framework, dashboard or automatic model download is authorized.

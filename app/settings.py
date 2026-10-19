@@ -18,7 +18,7 @@ class Settings:
     review_at: str = DEMO_TIME
     timeout_seconds: float = 60
     ollama_endpoint: str = "http://127.0.0.1:11434/v1"
-    ollama_model: str = "qwen2.5:0.5b"
+    ollama_model: str = "fleetcharge-phi3.5:latest"
 
     def __post_init__(self) -> None:
         url = urlparse(self.endpoint)

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from app.cosmos_repository import CosmosRepository
 from app.fleet_rules import SourceDataError, canonical_hash, compute_decision
@@ -27,6 +27,7 @@ TOOL_NAMES = (
     "find_available_chargers",
     "write_charging_recommendation",
 )
+IsoTimestamp = Annotated[str, Field(json_schema_extra={"format": "date-time"})]
 
 
 def parse_document[ModelT: BaseModel](model: type[ModelT], raw: dict[str, Any]) -> ModelT:
@@ -93,7 +94,7 @@ class ReviewTools:
         return wire(self.policy)
 
     async def get_delivery_wave(self, depotId: str, deliveryWaveId: str) -> dict[str, Any]:
-        """Read the requested delivery wave."""
+        """Read the wave. Copy depotId and deliveryWaveId exactly from the original request."""
         self.enter("get_delivery_wave", {"depotId": depotId, "deliveryWaveId": deliveryWaveId})
         self.wave = parse_document(
             Wave, await self.repository.read("routes", deliveryWaveId, depotId)
@@ -106,7 +107,7 @@ class ReviewTools:
     async def get_route_requirements(
         self, depotId: str, routeIds: list[str]
     ) -> list[dict[str, Any]]:
-        """Read every route referenced by the wave."""
+        """Read routes using every routeIds value from get_delivery_wave, sorted ascending."""
         self.enter("get_route_requirements", {"depotId": depotId, "routeIds": routeIds})
         if self.wave is None or routeIds != sorted(self.wave.route_ids):
             raise ValueError("Tool route IDs must exactly match the wave")
@@ -121,7 +122,7 @@ class ReviewTools:
         return [wire(route) for route in self.routes]
 
     async def get_vehicle_status(self, depotId: str, vehicleIds: list[str]) -> list[dict[str, Any]]:
-        """Read the assigned vehicles and maintenance flags."""
+        """Read vehicles using every assignedVehicleId from get_route_requirements, sorted."""
         self.enter("get_vehicle_status", {"depotId": depotId, "vehicleIds": vehicleIds})
         if vehicleIds != sorted(r.assigned_vehicle_id for r in self.routes):
             raise ValueError("Tool vehicle IDs must exactly match assigned vehicles")
@@ -136,7 +137,7 @@ class ReviewTools:
         return [wire(vehicle) for vehicle in self.vehicles]
 
     async def get_latest_telemetry(self, vehicleIds: list[str]) -> list[dict[str, Any]]:
-        """Select fresh current telemetry, never vehicle battery summaries."""
+        """Select fresh telemetry using every vehicleId from get_vehicle_status, sorted."""
         self.enter("get_latest_telemetry", {"vehicleIds": vehicleIds})
         if vehicleIds != sorted(v.vehicle_id for v in self.vehicles):
             raise ValueError("Telemetry IDs must exactly match the vehicles")
@@ -163,9 +164,17 @@ class ReviewTools:
         return [wire(reading) for reading in self.telemetry]
 
     async def find_available_chargers(
-        self, depotId: str, connectorTypes: list[str], startAfter: str, endBefore: str
+        self,
+        depotId: str,
+        connectorTypes: list[str],
+        startAfter: IsoTimestamp,
+        endBefore: IsoTimestamp,
     ) -> dict[str, Any]:
-        """Compute a validated decision from compatible, owned charger candidates."""
+        """Compute the decision. Use sorted unique connectorType values from vehicles.
+        Copy startAfter from the fixed review time and endBefore from the delivery
+        wave's startTime, preserving the exact ISO timestamp strings unchanged.
+        Never infer timestamps from the wave ID.
+        """
         self.enter(
             "find_available_chargers",
             {
@@ -202,10 +211,14 @@ class ReviewTools:
     async def write_charging_recommendation(
         self, depotId: str, deliveryWaveId: str, decision: dict[str, Any]
     ) -> dict[str, Any]:
-        """Validate the proposal and persist one deterministic audit identity."""
+        """Persist the complete decision object returned by find_available_chargers unchanged."""
         self.enter(
             "write_charging_recommendation",
-            {"depotId": depotId, "deliveryWaveId": deliveryWaveId, "decision": decision},
+            {
+                "depotId": depotId,
+                "deliveryWaveId": deliveryWaveId,
+                "decision": decision,
+            },
         )
         if self.decision is None or Decision.model_validate(decision) != self.decision:
             raise ValueError("Proposed decision does not match computed source-grounded decision")

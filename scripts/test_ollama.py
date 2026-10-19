@@ -28,8 +28,8 @@ def main() -> int:
             response = http.post(f"{url}/api/show", json={"model": settings.ollama_model})
             response.raise_for_status()
             metadata = response.json()
-            if "tools" not in metadata.get("capabilities", []) or metadata.get("remote_host"):
-                raise ValueError("The installed model must support local tool calling")
+            if "completion" not in metadata.get("capabilities", []) or metadata.get("remote_host"):
+                raise ValueError("The installed model must support local chat completion")
             response = http.get(f"{url}/api/tags")
             response.raise_for_status()
             installed = next(

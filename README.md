@@ -83,15 +83,17 @@ identical document IDs in separate depot partitions.
 ## Optional: test an actual local LLM with Ollama
 
 The required gate stays scripted and never contacts a model. To run a separate
-real-model smoke test, have Ollama running locally with an **already installed,
-tool-capable model**, then run:
+real-model smoke test, have Ollama running locally with **`phi3.5:latest` already
+installed**, then create a context-bounded alias from those existing weights:
 
 ```powershell
+ollama create fleetcharge-phi3.5 -f scripts\Ollama.modelfile
 uv sync --locked --extra test --extra ollama
-uv run --locked --extra test --extra ollama python -m scripts.test_ollama --model qwen2.5:0.5b
+uv run --locked --extra test --extra ollama python -m scripts.test_ollama --model fleetcharge-phi3.5:latest
 ```
 
-The command does not install Ollama or download model weights. It checks local
+Use the [Modelfile](scripts/Ollama.modelfile) path appropriate to your shell.
+The test command does not install Ollama, create model aliases or download weights. It checks local
 model availability, owns a separate seeded emulator and tests the real API/model/
 framework/tool path. The test verifies the golden 11-minute recommendation, reads
 and queries the audit independently, changes telemetry to 90%, reviews again to
@@ -104,15 +106,25 @@ Results, model identity and emulator logs are saved under `.artifacts`. Default
 pytest collection excludes these explicitly opt-in tests, not the database tests.
 Small models may fail the tool/JSON contract; a failed smoke test is meaningful,
 not proof the emulator is broken. This is not a model benchmark.
-The installed `qwen2.5:0.5b` was exercised locally and currently fails this contract;
-it is an example installed tag, not a verified model recommendation. The required
-database gate and client/tool contract tests do not depend on its quality.
+The installed `qwen2.5:0.5b` failed the original native-tool approach. The bounded
+Microsoft Phi-3.5 alias passed two complete live runs in **351.47 seconds** and
+**408.38 seconds**, each including both reviews and output CRUD. The feature's
+required local gate passed **128 tests**, with lint, formatting, strict types and
+the real HTTP smoke also passing. No new weights were downloaded.
+
+Ollama native `tool_choice` is not relied on. The model generates schema-constrained
+JSON proposals; an adapter converts validated proposals to real framework function
+calls. Only the next valid tool is exposed, request identities are constrained to
+the requested depot/wave, and actual tool results are supplied as compact context.
+Fleet rules and write validation are unchanged. The final model JSON must still
+match the acknowledged persisted response exactly. This is a constrained tool
+workflow, not a claim of unconstrained autonomous planning.
 
 For an interactive Ollama demo in PowerShell:
 
 ```powershell
 $env:AGENT_MODEL_MODE = "ollama"
-$env:OLLAMA_MODEL = "qwen2.5:0.5b"
+$env:OLLAMA_MODEL = "fleetcharge-phi3.5:latest"
 $env:FLEETCHARGE_TIMEOUT_SECONDS = "300"
 uv run --locked --extra test --extra ollama python -m scripts.demo --port 8001
 ```

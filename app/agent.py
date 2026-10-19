@@ -97,17 +97,8 @@ async def review_wave(
                     },
                 )
                 response = await agent.run(
-                    (
-                        f"Review depotId {request.depot_id}, deliveryWaveId "
-                        f"{request.delivery_wave_id}. Begin with get_depot_policy using "
-                        f'depotId="{request.depot_id}".'
-                        if settings.mode == "ollama"
-                        else json.dumps(
-                            {
-                                "depotId": request.depot_id,
-                                "deliveryWaveId": request.delivery_wave_id,
-                            }
-                        )
+                    json.dumps(
+                        {"depotId": request.depot_id, "deliveryWaveId": request.delivery_wave_id}
                     ),
                     session=agent.create_session(),
                 )
