@@ -34,6 +34,7 @@ def main() -> int:
                 COSMOS_ENDPOINT=emulator.endpoint,
                 COSMOS_READY_URL=emulator.ready_url,
                 AGENT_MODEL_MODE="scripted",
+                FLEETCHARGE_TIMEOUT_SECONDS="60",
             )
             run_phase(
                 "All tests against isolated emulator",

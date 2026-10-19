@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import socket
+from dataclasses import replace
 
 import httpx
 import uvicorn
@@ -17,7 +18,7 @@ from scripts.seed_cosmos import seed
 
 
 async def serve(endpoint: str, port: int, smoke: bool) -> None:
-    settings = Settings(endpoint=endpoint)
+    settings = replace(Settings.from_env(), endpoint=endpoint)
     async with CosmosClient(settings.endpoint, credential=settings.key) as client:
         try:
             await seed(client, settings)
@@ -39,7 +40,7 @@ async def serve(endpoint: str, port: int, smoke: bool) -> None:
                     url = f"http://127.0.0.1:{actual_port}/agent/review-delivery-wave"
                     print(f"POST {url}", flush=True)
                     if smoke:
-                        async with httpx.AsyncClient(timeout=60) as http:
+                        async with httpx.AsyncClient(timeout=settings.timeout_seconds + 10) as http:
                             response = await http.post(
                                 url,
                                 json={

@@ -5,7 +5,7 @@
 - This directory is the Git repository root. Its parent is a working folder, not a repository; never initialize Git or put application files there.
 - Build FleetCharge Agent for Northwind Freight: review an EV depot's delivery wave and return data-grounded charging recommendations.
 - Read [app requirements](../docs/app-requirements.md), the [constitution](../.specify/memory/constitution.md), and the active feature spec before changing behavior. Use the [Spec Kit walkthrough](../docs/speckit-walkthrough.md) for setup, requirement gaps, and acceptance criteria.
-- Keep this sample CI-focused. Production deployment, IaC, production identity, RU benchmarking, multi-region behavior, and live-model evaluation pipelines are out of scope.
+- Keep this sample CI-focused. Optional local Ollama smoke/output CRUD testing is authorized in `specs/004-ollama-seeded-crud`; production deployment, IaC, production identity, RU benchmarking, multi-region behavior, and full live-model evaluation pipelines remain out of scope.
 
 ## Workspace identity and workflow authentication
 
@@ -43,6 +43,7 @@
 - Do not bypass the framework in CI, mock the agent's final response, or replace the Cosmos repository with an in-memory fake in integration tests.
 - Keep battery rules, maintenance exclusion, scheduling checks, evidence validation, and idempotency in application code, not model prose. Validate tool inputs and model-proposed writes before persistence.
 - Fail explicitly on unknown tools, invalid arguments, unexpected scripted turns, exhausted scripts, and tool-loop limits. Never fall back silently to a live model.
+- Optional Ollama mode uses an explicitly selected, installed local tool-capable model and the same guarded tools. Do not download models automatically, use hosted/cloud inference, or silently substitute scripted output. Required CI must not require the optional model/provider.
 - Verify the selected framework version's client/tool APIs in official documentation and pin compatible dependencies when implementation adds a manifest. Do not assume the outline's `ModelPlanner` pseudocode is a framework API.
 
 ## Cosmos DB and deterministic behavior
