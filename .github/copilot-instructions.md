@@ -34,6 +34,7 @@
 
 ## Agent framework and architecture
 
+- Resolve packages only from accessible Microsoft-hosted resources, respecting the environment's network security policy. Use the newest stable compatible versions available there, not unavailable PyPI/npm pins. The Python default index is Microsoft's public Azure Artifacts feed; do not silently fall back to public registries, disable TLS validation, or bypass network restrictions. Lock and verify the resolved environment before claiming compatibility.
 - Use **Microsoft Agent Framework for Python** for the application agent and tool execution. Spec Kit is the development workflow, not the runtime framework.
 - Target Python 3.12, FastAPI with typed request/response models, the Azure Cosmos DB Python SDK, and pytest. React/Vite is the later demo UI, not a prerequisite for the backend CI gate.
 - Use a single agent with explicit tools. Do not add a multi-agent system, hosted agent service, or a second agent framework without a documented need.

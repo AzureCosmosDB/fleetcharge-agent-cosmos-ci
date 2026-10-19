@@ -1,0 +1,54 @@
+import os
+import re
+from dataclasses import dataclass
+from datetime import datetime
+from urllib.parse import urlparse
+
+DEMO_TIME = "2026-10-19T12:30:00-07:00"
+# Public emulator-only test key; not a production credential or an authorization boundary.
+EMULATOR_KEY = "ZW11bGF0b3Itb25seQ=="
+
+
+@dataclass(frozen=True)
+class Settings:
+    endpoint: str = "http://127.0.0.1:18081"
+    database: str = "fleetchargetest-demo"
+    key: str = EMULATOR_KEY
+    mode: str = "scripted"
+    review_at: str = DEMO_TIME
+    timeout_seconds: float = 60
+
+    def __post_init__(self) -> None:
+        url = urlparse(self.endpoint)
+        if (
+            url.scheme not in {"http", "https"}
+            or url.hostname not in {"localhost", "127.0.0.1", "::1"}
+            or url.username
+            or url.password
+            or url.path not in {"", "/"}
+            or url.query
+            or url.fragment
+        ):
+            raise ValueError("The teaching sample accepts loopback emulator endpoints only")
+        if not re.fullmatch(r"fleetchargetest-[A-Za-z0-9_-]{1,80}", self.database):
+            raise ValueError("Database name must use the isolated fleetchargetest- prefix")
+        if self.mode != "scripted":
+            raise ValueError("Only scripted model mode is supported")
+        if self.clock.tzinfo is None or self.clock.utcoffset() is None:
+            raise ValueError("Review time must include a timezone offset")
+        if not 0 < self.timeout_seconds <= 60:
+            raise ValueError("Review deadline must be within 60 seconds")
+
+    @property
+    def clock(self) -> datetime:
+        return datetime.fromisoformat(self.review_at)
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        return cls(
+            endpoint=os.environ.get("COSMOS_ENDPOINT", cls.endpoint),
+            database=os.environ.get("COSMOS_DATABASE", cls.database),
+            key=os.environ.get("COSMOS_KEY", EMULATOR_KEY),
+            mode=os.environ.get("AGENT_MODEL_MODE", cls.mode),
+            review_at=os.environ.get("FLEETCHARGE_REVIEW_AT", DEMO_TIME),
+        )

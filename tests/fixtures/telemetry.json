@@ -1,0 +1,18 @@
+[
+  {
+    "id": "telemetry-van-042-old", "depotId": "SEA-01", "type": "batteryTelemetry",
+    "vehicleId": "van-042", "observedAt": "2026-10-19T11:00:00-07:00", "batteryPercent": 92
+  },
+  {
+    "id": "telemetry-van-042-latest", "depotId": "SEA-01", "type": "batteryTelemetry",
+    "vehicleId": "van-042", "observedAt": "2026-10-19T12:20:00-07:00", "batteryPercent": 58
+  },
+  {
+    "id": "telemetry-van-088-latest", "depotId": "SEA-01", "type": "batteryTelemetry",
+    "vehicleId": "van-088", "observedAt": "2026-10-19T12:20:00-07:00", "batteryPercent": 90
+  },
+  {
+    "id": "telemetry-van-099-latest", "depotId": "SEA-01", "type": "batteryTelemetry",
+    "vehicleId": "van-099", "observedAt": "2026-10-19T12:20:00-07:00", "batteryPercent": 92
+  }
+]

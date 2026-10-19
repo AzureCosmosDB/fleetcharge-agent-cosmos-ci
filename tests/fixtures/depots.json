@@ -1,0 +1,24 @@
+[
+  {
+    "id": "policy-SEA-01",
+    "depotId": "SEA-01",
+    "type": "depotPolicy",
+    "timezone": "America/Los_Angeles",
+    "minimumBatteryBufferPercent": 12,
+    "telemetryMaxAgeMinutes": 30,
+    "chargerReservationWindowMinutes": 45,
+    "allowRouteSwap": false,
+    "allowPartialCharge": false
+  },
+  {
+    "id": "policy-PDX-02",
+    "depotId": "PDX-02",
+    "type": "depotPolicy",
+    "timezone": "America/Los_Angeles",
+    "minimumBatteryBufferPercent": 12,
+    "telemetryMaxAgeMinutes": 30,
+    "chargerReservationWindowMinutes": 45,
+    "allowRouteSwap": false,
+    "allowPartialCharge": false
+  }
+]

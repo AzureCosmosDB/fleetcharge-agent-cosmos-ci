@@ -16,7 +16,11 @@ Already prepared:
 - An initial [constitution](../.specify/memory/constitution.md) based on the requirements.
 - A self-contained copy of the original requirements.
 
-Not built yet: feature specs, application code, dependency manifests, emulator setup, tests, workflows, and frontend. This walkthrough prepares that work; it does not claim the app or CI is running.
+The first feature is tracked on `001-wave-review`: [specification](../specs/001-wave-review/spec.md), [technical plan](../specs/001-wave-review/plan.md), and [implementation tasks](../specs/001-wave-review/tasks.md). The teaching backend and real-emulator tests are now implemented.
+
+Dependencies now resolve exclusively from Microsoft's public Azure Artifacts feed using a checked-in lock. Framework 1.21.0 and the newest compatible releases with downloadable Windows/Linux artifacts were selected; verified exact wheel metadata handles missing feed sidecars. Locked installation and imports pass. The full local CI gate passed 96 tests; a real HTTP probe returned 200 and matched the stored audit. See [verification](verification.md) and [dependency research](../specs/001-wave-review/research.md).
+
+The [README](../README.md) is the short reader path: run `uv run --locked --extra test python -m scripts.ci`. The [Actions feature](../specs/002-pr-ci-gate/spec.md) reuses that gate and tracks PR/merge verification. The agent is only the teaching workload; the [article](blog-emulator-ci.md) focuses on emulator-backed CI. Dashboard/live-model work remains out of scope.
 
 ## 2. What we need installed
 
@@ -108,7 +112,7 @@ Expected output: a feature branch/directory with a `spec.md` containing prioriti
 /speckit.clarify Resolve policy retrieval, complete fixture coverage, telemetry freshness and ownership, battery/weather/buffer math, scheduling feasibility and reservation boundaries, audit idempotency, evidence identity, and API error semantics. Distinguish agreed decisions from assumptions and do not present sample timestamps or durations as proven calculations.
 ```
 
-The questions in section 6 are spec inputs, not permission to guess silently. Record resolved decisions in the spec; retain a visible blocker for unresolved correctness-critical behavior.
+The questions in section 6 are spec inputs, not permission to guess silently. The first feature records concrete demo assumptions and resolutions in its specification, including a derived 11-minute charge replacing the outline's illustrative 35 minutes. Revisit those recorded decisions if behavior changes; retain a visible blocker for any new unresolved correctness-critical behavior.
 
 ### Plan: how
 

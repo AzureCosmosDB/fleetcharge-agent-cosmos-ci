@@ -1,0 +1,28 @@
+[
+  {
+    "id": "wave-2026-10-19-1400",
+    "depotId": "SEA-01",
+    "type": "deliveryWave",
+    "startTime": "2026-10-19T14:00:00-07:00",
+    "routeIds": ["route-77", "route-88"],
+    "status": "planning"
+  },
+  {
+    "id": "route-77",
+    "depotId": "SEA-01",
+    "type": "route",
+    "deliveryWaveId": "wave-2026-10-19-1400",
+    "assignedVehicleId": "van-042",
+    "requiredBatteryPercent": 64,
+    "weatherAdjustmentPercent": 6
+  },
+  {
+    "id": "route-88",
+    "depotId": "SEA-01",
+    "type": "route",
+    "deliveryWaveId": "wave-2026-10-19-1400",
+    "assignedVehicleId": "van-088",
+    "requiredBatteryPercent": 40,
+    "weatherAdjustmentPercent": 0
+  }
+]

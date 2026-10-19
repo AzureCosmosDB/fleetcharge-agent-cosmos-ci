@@ -1,0 +1,20 @@
+[
+  {
+    "id": "vehicle-van-042", "depotId": "SEA-01", "type": "vehicle",
+    "vehicleId": "van-042", "status": "available", "maintenanceHold": false,
+    "connectorType": "CCS", "maxChargeKw": 150, "usableBatteryKwh": 100,
+    "batteryPercent": 95, "assignedRouteId": "route-77"
+  },
+  {
+    "id": "vehicle-van-088", "depotId": "SEA-01", "type": "vehicle",
+    "vehicleId": "van-088", "status": "available", "maintenanceHold": false,
+    "connectorType": "CCS", "maxChargeKw": 150, "usableBatteryKwh": 100,
+    "batteryPercent": 90, "assignedRouteId": "route-88"
+  },
+  {
+    "id": "vehicle-van-099", "depotId": "SEA-01", "type": "vehicle",
+    "vehicleId": "van-099", "status": "available", "maintenanceHold": true,
+    "connectorType": "CCS", "maxChargeKw": 150, "usableBatteryKwh": 100,
+    "batteryPercent": 92, "assignedRouteId": null
+  }
+]

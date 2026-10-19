@@ -1,0 +1,21 @@
+[
+  {
+    "id": "charger-fast-03", "depotId": "SEA-01", "type": "charger",
+    "chargerId": "charger-fast-03", "status": "available", "connectorType": "CCS",
+    "maxKw": 150, "reservations": []
+  },
+  {
+    "id": "charger-fast-01", "depotId": "SEA-01", "type": "charger",
+    "chargerId": "charger-fast-01", "status": "occupied", "connectorType": "CCS",
+    "maxKw": 150,
+    "reservations": [{
+      "vehicleId": "van-other", "start": "2026-10-19T12:15:00-07:00",
+      "end": "2026-10-19T13:10:00-07:00"
+    }]
+  },
+  {
+    "id": "charger-fast-03", "depotId": "PDX-02", "type": "charger",
+    "chargerId": "charger-fast-03", "status": "available", "connectorType": "CCS",
+    "maxKw": 350, "reservations": []
+  }
+]

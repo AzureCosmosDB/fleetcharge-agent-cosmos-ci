@@ -1,0 +1,25 @@
+{
+  "depotId": "SEA-01",
+  "deliveryWaveId": "wave-2026-10-19-1400",
+  "recommendation": "rebalanceCharging",
+  "assignments": [
+    {
+      "vehicleId": "van-042",
+      "chargerId": "charger-fast-03",
+      "start": "2026-10-19T12:30:00-07:00",
+      "durationMinutes": 11,
+      "reason": "Battery state is below route requirement with safety buffer"
+    }
+  ],
+  "routeRisks": [
+    {"routeId": "route-77", "vehicleId": "van-042", "risk": "batteryShortfall"}
+  ],
+  "evidence": [
+    "charger-fast-03", "policy-SEA-01", "route-77", "route-88",
+    "telemetry-van-042-latest", "telemetry-van-088-latest",
+    "vehicle-van-042", "vehicle-van-088", "wave-2026-10-19-1400"
+  ],
+  "reviewedAt": "2026-10-19T12:30:00-07:00",
+  "auditId": "review-af93b4a54339163cdabe809f2861a9b3564b16522f277d68558229d1750f5887",
+  "decisionHash": "81305f5d1a36182dc98bf137839249e0dec5ba244ca0b979e5dba2bc53b2b4ad"
+}
