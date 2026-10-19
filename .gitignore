@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/
+.coverage
+htmlcov/
+test-results*.xml
+cosmos-emulator.log
