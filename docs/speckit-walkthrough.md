@@ -22,6 +22,10 @@ Dependencies now resolve exclusively from Microsoft's public Azure Artifacts fee
 
 The [README](../README.md) is the short reader path: run `uv run --locked --extra test python -m scripts.ci`. The [Actions feature](../specs/002-pr-ci-gate/spec.md) reuses that gate and tracks PR/merge verification. The agent is only the teaching workload; the [article](blog-emulator-ci.md) focuses on emulator-backed CI. Dashboard/live-model work remains out of scope.
 
+Delivery verified: PR #1 demonstrated hosted green -> intentionally red -> restored
+green, was merged only after passing checks, and main passed all 96 tests at the exact
+merge commit. [Run links and diagnostic-upload evidence](verification.md) are recorded.
+
 ## 2. What we need installed
 
 | Need | Purpose | When |

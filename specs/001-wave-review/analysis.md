@@ -1,18 +1,18 @@
 # Cross-Artifact Analysis: Wave Review
 
 **Date**: 2026-10-19
-**Scope**: Specification, plan, research, data model, contracts, tasks and reader-path preview.
+**Scope**: Specification, plan, research, data model, contracts, tasks and implemented reader path.
 **Result**: Original design analysis retained below; implementation gates are now locally verified. See [verification evidence](../../docs/verification.md) for actual run outcomes.
 
 ## Alignment and coverage
 
 | Check | Result | Evidence |
 |---|---|---|
-| CI lesson remains central | PASS | Purpose/scope excludes app polish; Actions is the next deliverable, not replaced by a dashboard |
+| CI lesson remains central | PASS | Shared local/Actions emulator gate and real green/red/restored-green evidence; no dashboard |
 | Planned agent retained | PASS | Standard Agent Framework orchestration and seven typed tools remain the real workload |
 | Spec completeness | PASS | Three prioritized stories, 16 requirements, six measurable outcomes and explicit assumptions |
 | Requirement/task coverage | PASS | Every FR-001 through FR-016 maps to named test/implementation tasks |
-| Task graph | PASS | 25 unique pending tasks; all dependency rows exist; graph is acyclic |
+| Task graph | PASS | 25 completed implementation tasks; dependency rows exist; graph is acyclic |
 | Golden calculation | PASS | Decimal calculation independently confirms 11-minute duration from stated inputs |
 | Data traps | PASS | Same-ID cross-depot documents, genuinely assigned maintenance variant, conflicting summary/telemetry |
 | Provenance | PASS | Public IDs remain simple; audit/trace retains container/partition/document identity |
@@ -39,7 +39,7 @@ These are tasks, not unspecified product behavior:
 - **T006/T009**: PASS: pinned emulator digest, six containers, actual point reads/partitioned queries/upserts/read-back.
 - **T018-T022**: PASS: golden, ownership, maintenance, latest telemetry, audit and failure tests in the full 96-test local suite.
 - **T024**: PASS: lint/format/types/local suite, HTTP smoke and fresh-clone locked-install/96-test rehearsal.
-- **Companion CI feature**: User authorized Actions, regression proof, merge and post-merge test; [tasks](../002-pr-ci-gate/tasks.md) record hosted completion separately.
+- **Companion CI feature**: PASS: real hosted green/red/restored-green, PR #1 merge and exact main-merge SHA test; [tasks](../002-pr-ci-gate/tasks.md) and [run evidence](../../docs/verification.md).
 
 ## Scope and publication
 

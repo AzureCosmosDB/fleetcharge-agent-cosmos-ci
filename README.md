@@ -85,6 +85,8 @@ GitHub-owned actions, no repository secrets and no Azure credentials.
 
 See [verification evidence](docs/verification.md) for actual local/hosted outcomes
 and the intentional failing-depot-query demonstration.
+The implementation PR is merged: local, hosted PR and merged-main gates passed all
+96 tests. The deliberate bad-query run failed as expected before the fix was merged.
 
 ## Sources, limitations and the article
 

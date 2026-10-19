@@ -42,11 +42,23 @@ has real hosted Linux evidence:
 |---|---|---|
 | Initial green | [39314015515](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39314015515) | Python 3.12.15; 96 passed; lint/format/types and cleanup passed |
 | Intentional red | [39314553343](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39314553343) | 16 failed / 80 passed from widened depot scope; job failed; diagnostics uploaded; cleanup passed |
+| Restored green | [39315046802](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39315046802) | 96 passed; scoped reads restored; diagnostics uploaded; cleanup passed |
+| Merged main | [39315371445](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39315371445) | 96 passed at merge commit `b21ad157df5db049174b3f2c447b630efd9128c5`; diagnostics uploaded; cleanup passed |
 
 The initial green exposed a diagnostics issue: upload-artifact excludes hidden paths
 by default, so it did not upload `.artifacts`. The workflow now explicitly includes
 hidden files **only within that directory**. The red run verified a real nonempty
 uploaded artifact (ID 12217043774), not merely a successful upload step.
 
-Correct depot scoping has been restored. Its final green run and main-merge verification
-are recorded after completion; the intentional bug must never be merged.
+PR #1 was squash-merged only after its restored gate and all PR checks passed.
+The intentionally broken intermediate commit is not in main's history. The main push
+run verified the exact merge SHA, not a feature-branch substitute.
+
+The merged-main artifact was nonempty (ID 12218275183, 5105 bytes). Artifacts are retained
+for seven days; the durable run links and conclusions above remain the evidence after
+download retention expires. Later documentation-only merges may produce additional
+[main runs](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml?query=branch%3Amain).
+
+All human publication operations used process-scoped `jaydestro` credentials. The
+shared machine's default GitHub identity was not switched. Repository visibility
+remains private; changing it for external blog readers is a separate maintainer decision.
