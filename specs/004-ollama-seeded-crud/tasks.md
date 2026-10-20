@@ -5,6 +5,8 @@
 - [x] T003 (FR-004): Verify real-model output and independent read/query/update/delete.
 - [x] T004 (FR-006): Add the bounded optional runner and reader documentation.
 - [x] T005 (all): Run required gate and actual local LLM test; push verified work.
+- [x] T006 (FR-007): Wire isolated pinned Ollama provisioning/readiness and the live test into branch/manual Actions.
+- [ ] T007 (FR-007): Push this branch only and verify both hosted jobs; record actual outcomes without merging.
 
 ## Verification
 

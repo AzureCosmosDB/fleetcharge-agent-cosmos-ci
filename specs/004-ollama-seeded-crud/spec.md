@@ -27,6 +27,13 @@ gate's no-live-model contract.
 - **FR-006**: A documented bounded command must own its emulator, preserve
   diagnostics and clean up on success or failure without stopping local Ollama
   or unrelated services.
+- **FR-007**: A separate live-model Actions job must provision pinned Ollama and
+  Microsoft Phi-3.5 on a disposable runner, poll loopback readiness with a deadline,
+  and run the existing exact-output/output-CRUD test without fallback or retries
+  of incorrect model answers. Runtime checksums and the model digest must be
+  verified. Publish diagnostics on failure and stop only the job-owned process.
+  Run both CI jobs on `004-ollama-seeded-crud` without merging or modifying main.
+  The deterministic PR gate must remain independent of live-model availability.
 
 ## Boundaries
 
@@ -36,4 +43,7 @@ The adapter validates their structure before framework dispatch; deterministic
 code still computes and validates charging decisions. This is a constrained tool-using agent smoke test,
 not a broad model benchmark. CRUD operations are test-side SDK assertions, not
 new destructive agent tools or public API endpoints. No production resources,
-new framework, dashboard or automatic model download is authorized.
+new framework or dashboard is authorized. The user-authorized Actions provisioning
+step may download the pinned Microsoft model from Ollama's official registry and
+the pinned runtime from its official GitHub release. This is separate from the
+application and local test runner, which never download models automatically.

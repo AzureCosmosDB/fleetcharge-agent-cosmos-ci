@@ -50,6 +50,24 @@ The lock resolves the documented Windows/Linux targets; OpenAI's browser-only
 | FR-003, FR-005 | Settings and framework client selection | Unit/failure tests and live execution |
 | FR-004 | Live golden/output CRUD test | Optional `scripts.test_ollama` |
 | FR-006 | Owned emulator runner and README | Success/failure cleanup and documented commands |
+| FR-007 | Separate branch/manual live-model Actions job | Hosted branch run: readiness, exact output, output CRUD and diagnostics |
+
+## Branch live-model CI extension
+
+Keep the existing deterministic job unchanged and independent. Add push coverage
+for this feature branch and a separate live-model job on branch pushes or manual
+dispatch. Do not make real-model inference a prerequisite of the deterministic PR
+gate. Use GitHub-hosted Ubuntu, loopback Ollama, no personal tokens/secrets and
+`contents: read`. Install Python dependencies only from the locked Microsoft feed.
+
+Provision official Ollama 0.40.6 from its SHA-256-verified Linux release and pull
+the Microsoft Phi-3.5 model from Ollama's official registry. Verify its exact known
+digest before creating the existing context-bounded alias. This explicit CI-only
+download is authorized by the user's CI wiring request; local commands continue
+to require installed weights. Poll only runtime readiness, never model answers.
+Run the unchanged golden/output-CRUD assertions with bounded deadlines and fail
+on any timeout or unexpected output. Preserve runtime/provisioning/test/emulator
+logs even on failure and terminate the exact job-owned PID in an always step.
 
 See [tasks and actual outcomes](tasks.md). The actual bounded Phi-3.5 live test
 passed both reviews and persisted-output CRUD in two runs (351.47 and 408.38

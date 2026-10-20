@@ -139,6 +139,22 @@ The [workflow](.github/workflows/emulator-ci.yml) runs `scripts.ci` for PRs and 
 pushes, and uploads diagnostics even on failure. It uses `contents: read`, pinned
 GitHub-owned actions, no repository secrets and no Azure credentials.
 
+Pushes to `004-ollama-seeded-crud` also run a separate **Ollama expected output and
+CRUD** job; manual workflow dispatch runs it on the selected ref too. This job
+installs checksum-verified Ollama 0.40.6 from its official GitHub release, polls
+loopback readiness for at most 60 seconds, explicitly pulls Microsoft Phi-3.5
+from Ollama's official registry and verifies the known model digest before
+creating the context-bounded alias. Python dependencies still come exclusively
+from the locked Microsoft feed. No hosted inference service or secret is needed.
+
+It runs the same live test described above: exact seeded golden response, updated
+`noAction` response and independently verified output CRUD. Incorrect responses
+are not retried until green. A failing live job stays failed; it does not fall
+back to scripted responses. The deterministic job runs independently. Each job
+uploads separate diagnostics on success or failure; the live job stops only its
+own Ollama process. CI provisions its own weights on an ephemeral runner; local
+test commands still require an already-installed model.
+
 See [verification evidence](docs/verification.md) for actual local/hosted outcomes
 and the intentional failing-depot-query demonstration.
 The implementation PR is merged: local, hosted PR and merged-main gates passed all
