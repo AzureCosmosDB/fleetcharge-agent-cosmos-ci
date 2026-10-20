@@ -13,7 +13,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures"
 async def seed(client: CosmosClient, settings: Settings) -> None:
     await provision(client, settings)
     database = client.get_database_client(settings.database)
-    for name in ("depots", "routes", "vehicles", "chargers", "telemetry"):
+    for name in ("depots", "routes", "vehicles", "chargers", "telemetry", "dispatchUpdates"):
         for document in json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8")):
             await database.get_container_client(name).upsert_item(document)
 

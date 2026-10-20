@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import json
 import socket
+from dataclasses import replace
 
 import httpx
 import uvicorn
@@ -17,7 +18,7 @@ from scripts.seed_cosmos import seed
 
 
 async def serve(endpoint: str, port: int, smoke: bool) -> None:
-    settings = Settings(endpoint=endpoint)
+    settings = replace(Settings.from_env(), endpoint=endpoint)
     async with CosmosClient(settings.endpoint, credential=settings.key) as client:
         try:
             await seed(client, settings)
@@ -39,7 +40,69 @@ async def serve(endpoint: str, port: int, smoke: bool) -> None:
                     url = f"http://127.0.0.1:{actual_port}/agent/review-delivery-wave"
                     print(f"POST {url}", flush=True)
                     if smoke:
-                        async with httpx.AsyncClient(timeout=60) as http:
+                        async with httpx.AsyncClient(timeout=settings.timeout_seconds + 10) as http:
+                            base = f"http://127.0.0.1:{actual_port}"
+                            feed = {
+                                "depotId": "SEA-01",
+                                "updateId": "dispatch-007",
+                                "pickupBay": "BAY-7",
+                            }
+                            receipt = await http.post(f"{base}/feeds/dispatch-updates", json=feed)
+                            receipt.raise_for_status()
+                            if not all(receipt.json()[key] == value for key, value in feed.items()):
+                                raise AssertionError("Dispatch acknowledgement differs from input")
+                            stored = (
+                                await client.get_database_client(settings.database)
+                                .get_container_client("dispatchUpdates")
+                                .read_item("current-dispatch", partition_key="SEA-01")
+                            )
+                            if not all(stored[key] == value for key, value in feed.items()):
+                                raise AssertionError("Stored dispatch update differs from input")
+                            briefing = await http.post(
+                                f"{base}/agent/ask-dispatch",
+                                json={
+                                    "depotId": "SEA-01",
+                                    "question": "Where should drivers collect dispatch paperwork? "
+                                    "Include the update reference.",
+                                },
+                            )
+                            briefing.raise_for_status()
+                            dispatch = briefing.json()
+                            if (
+                                dispatch["pickupBay"] != "BAY-7"
+                                or dispatch["updateId"] != "dispatch-007"
+                                or "BAY-7" not in dispatch["answer"]
+                                or "dispatch-007" not in dispatch["answer"]
+                            ):
+                                raise AssertionError("Generated briefing differs from stored feed")
+                            print(json.dumps(dispatch, indent=2), flush=True)
+                            question = await http.post(
+                                f"http://127.0.0.1:{actual_port}/agent/ask-vehicles",
+                                json={
+                                    "depotId": "SEA-01",
+                                    "question": "How many vehicles are stored for this depot? "
+                                    "List their vehicle IDs.",
+                                },
+                            )
+                            question.raise_for_status()
+                            answer = question.json()
+                            vehicles = [
+                                item
+                                async for item in client.get_database_client(settings.database)
+                                .get_container_client("vehicles")
+                                .query_items(
+                                    "SELECT * FROM c WHERE c.depotId = @depot",
+                                    parameters=[{"name": "@depot", "value": "SEA-01"}],
+                                    partition_key="SEA-01",
+                                )
+                            ]
+                            if answer["vehicleCount"] != len(vehicles) or sorted(
+                                answer["vehicleIds"]
+                            ) != sorted(item["vehicleId"] for item in vehicles):
+                                raise AssertionError(
+                                    "Model answer differs from actual vehicle records"
+                                )
+                            print(json.dumps(answer, indent=2), flush=True)
                             response = await http.post(
                                 url,
                                 json={

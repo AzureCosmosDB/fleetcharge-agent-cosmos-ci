@@ -1,0 +1,16 @@
+[
+  {
+    "id": "current-dispatch",
+    "type": "dispatchUpdate",
+    "depotId": "SEA-01",
+    "updateId": "dispatch-001",
+    "pickupBay": "BAY-2"
+  },
+  {
+    "id": "current-dispatch",
+    "type": "dispatchUpdate",
+    "depotId": "PDX-02",
+    "updateId": "dispatch-099",
+    "pickupBay": "BAY-99"
+  }
+]

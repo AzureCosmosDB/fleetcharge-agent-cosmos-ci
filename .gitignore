@@ -1,18 +1,51 @@
+# Python environments and generated packages
 .venv/
+venv/
+env/
 __pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+*.whl
+
+# Tool caches and test output
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-*.py[cod]
+.uv-cache/
+.cache/
+.tox/
+.nox/
+.artifacts/
+.local/
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+test-results*.xml
+
+# Local configuration; keep the documented example
 .env
 .env.*
 !.env.example
+
+# Local writing helper, not part of the teaching app
+/.github/skills/humanizer/
+
+# Runtime logs and optional frontend dependencies
+*.log
 node_modules/
-dist/
-coverage/
-.coverage
-htmlcov/
-test-results*.xml
-cosmos-emulator.log
-.artifacts/
-.cache/
+
+# OS and editor temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Local article draft; never publish it with application code
+/docs/blog-emulator-ci.md

@@ -197,6 +197,7 @@ def test_timed_out_create_recovers_only_uuid_owned_container(
 
 
 def test_ci_phase_failure_returns_nonzero(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("sys.argv", ["ci", "--components-only"])
     calls: list[list[str]] = []
 
     def failure(command: list[str], **kwargs: Any) -> None:
@@ -212,12 +213,15 @@ def test_ci_phase_failure_returns_nonzero(tmp_path: Path, monkeypatch: pytest.Mo
 
 
 @pytest.mark.parametrize("pytest_fails", [False, True])
+@pytest.mark.parametrize("components_only", [False, True])
 def test_ci_runs_all_gates_and_cleans_after_pytest(
     docker: Docker,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     pytest_fails: bool,
+    components_only: bool,
 ) -> None:
+    monkeypatch.setattr("sys.argv", ["ci", "--components-only"] if components_only else ["ci"])
     phases: list[list[str]] = []
     original = docker.run
 
@@ -230,7 +234,7 @@ def test_ci_runs_all_gates_and_cleans_after_pytest(
         if "pytest" in command:
             assert kwargs["env"]["COSMOS_ENDPOINT"] == "http://127.0.0.1:49151"
             assert kwargs["env"]["COSMOS_READY_URL"] == "http://127.0.0.1:49152/ready"
-            assert kwargs["env"]["AGENT_MODEL_MODE"] == "scripted"
+            assert kwargs["env"]["AGENT_MODEL_MODE"] == "ollama"
             assert command[-1] == "--junitxml=.artifacts/results.xml"
             if pytest_fails:
                 raise subprocess.CalledProcessError(1, command)
@@ -239,12 +243,26 @@ def test_ci_runs_all_gates_and_cleans_after_pytest(
     monkeypatch.setattr(ci, "ROOT", tmp_path)
     monkeypatch.setattr(subprocess, "run", run)
     assert ci.main() == int(pytest_fails)
-    assert phases == [
+    expected = [
         ["uv", "sync", "--locked", "--extra", "test"],
         ["uv", "run", "--no-sync", "ruff", "check", "app", "scripts", "tests"],
         ["uv", "run", "--no-sync", "ruff", "format", "--check", "app", "scripts", "tests"],
         ["uv", "run", "--no-sync", "mypy", "app", "scripts"],
         ["uv", "run", "--no-sync", "pytest", "--junitxml=.artifacts/results.xml"],
     ]
+    if not components_only and not pytest_fails:
+        expected.append(
+            [
+                "uv",
+                "run",
+                "--no-sync",
+                "python",
+                "-m",
+                "scripts.test_ollama",
+                "--review-timeout",
+                "300",
+            ]
+        )
+    assert phases == expected
     assert ["docker", "rm", "--force", CONTAINER_ID] in docker.calls
     assert "emulator diagnostic" in (tmp_path / ".artifacts" / "emulator.log").read_text()

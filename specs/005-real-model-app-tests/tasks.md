@@ -1,0 +1,7 @@
+- [x] T001 (FR-001): Remove scripted runtime/injection and make Ollama the default dependency/configuration.
+- [x] T002 (FR-002): Convert replay coverage into honest direct tool/SDK tests and retain terminal guards.
+- [x] T003 (FR-003): Wire the complete local gate and real-only Actions application job.
+- [x] T004 (FR-004): Save actual inference transcripts, stream progress and publish verified reports.
+- [ ] T005 (FR-005): Verify local/branch results, merge working code and verify main without publishing the article.
+- [x] T006 (FR-006): Implement and live-test grounded vehicle counts of 3 then 4 after an SDK insertion.
+- [x] T007 (FR-007): Load local .env, synchronize the visible project and verify real HTTP startup/inference.

@@ -1,0 +1,3 @@
+FROM phi3.5:latest
+PARAMETER num_ctx 4096
+PARAMETER temperature 0

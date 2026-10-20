@@ -1,0 +1,5 @@
+- [x] T001 (FR-001): Add feed contracts, partitioned snapshot storage and ingestion route.
+- [x] T002 (FR-002): Add real-model dispatch question and exact source guard.
+- [x] T003 (FR-003): Test invalid feed, missing source, partition isolation and wrong answers.
+- [x] T004 (FR-004): Prove BAY-2 changes to BAY-7 through ingestion, stored context and actual inference.
+- [x] T005 (FR-005): Finish public README and verify package build and real HTTP startup.

@@ -16,6 +16,7 @@ PARTITIONS = {
     "chargers": "depotId",
     "telemetry": "vehicleId",
     "recommendations": "depotId",
+    "dispatchUpdates": "depotId",
 }
 
 

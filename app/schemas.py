@@ -149,6 +149,45 @@ class ReviewRequest(WireModel):
     delivery_wave_id: Identifier
 
 
+class VehicleQuestion(WireModel):
+    depot_id: Identifier
+    question: Annotated[StrictStr, Field(min_length=1, max_length=500, pattern=r"\S")]
+
+
+class VehicleAnswer(WireModel):
+    answer: Annotated[StrictStr, Field(min_length=10, max_length=1000)]
+    vehicle_count: Annotated[StrictInt, Field(ge=0)]
+    vehicle_ids: list[Identifier]
+
+
+class DispatchFeed(WireModel):
+    depot_id: Identifier
+    update_id: Identifier
+    pickup_bay: Annotated[StrictStr, Field(pattern=r"^BAY-[0-9]{1,3}$")]
+
+
+class DispatchUpdate(Document, DispatchFeed):
+    id: Literal["current-dispatch"] = "current-dispatch"
+    type: Literal["dispatchUpdate"] = "dispatchUpdate"
+
+
+class DispatchQuestion(VehicleQuestion):
+    pass
+
+
+class DispatchAnswer(WireModel):
+    answer: Annotated[
+        StrictStr,
+        Field(
+            min_length=10,
+            max_length=1000,
+            description="One sentence containing BOTH the exact pickupBay and exact updateId.",
+        ),
+    ]
+    pickup_bay: Annotated[StrictStr, Field(pattern=r"^BAY-[0-9]{1,3}$")]
+    update_id: Identifier
+
+
 class Assignment(WireModel):
     vehicle_id: Identifier
     charger_id: Identifier

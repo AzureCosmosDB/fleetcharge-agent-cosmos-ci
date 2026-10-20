@@ -1,0 +1,58 @@
+# Tasks
+
+- [x] T001 (FR-001, FR-002): Add real-SDK seeded CRUD/query/isolation tests.
+- [x] T002 (FR-003, FR-005): Add optional local Ollama selection and unit coverage.
+- [x] T003 (FR-004): Verify real-model output and independent read/query/update/delete.
+- [x] T004 (FR-006): Add the bounded optional runner and reader documentation.
+- [x] T005 (all): Run required gate and actual local LLM test; push verified work.
+- [x] T006 (FR-007): Wire isolated pinned Ollama provisioning/readiness and the live test into branch/manual Actions.
+- [x] T007 (FR-007): Push this branch only and verify both hosted jobs; record actual outcomes without merging.
+- [x] T008 (FR-008): Save actual seeded/updated response evidence and publish tested Markdown reports in logs, summaries and artifacts.
+- [ ] T009 (FR-009): Re-run full branch CI, merge working code through a PR and verify main; exclude the local article draft.
+
+## Verification
+
+Required gate: **128 passed, 0 failed, 0 skipped**, with lint, formatting and
+strict mypy passing. The gate was run after removing all seven optional provider
+dependencies. Real TCP HTTP smoke returned 200 with the 11-minute recommendation
+and independently matching audit. Missing model preflight returned nonzero before
+starting an emulator. Optional dependency consistency and the Linux jiter wheel
+were verified. Strict mypy also passed with the optional provider installed.
+Spec Kit prerequisites passed with the required tasks artifact present.
+
+The installed `qwen2.5:0.5b` failed the original native-tool approach. Native
+tool-choice enforcement was unreliable, so the optional transport now requests
+schema-constrained JSON proposals and converts them into real Agent Framework
+function calls. The same guarded tools, real SDK operations and strict terminal
+validation apply. Generated arguments are not repaired and no scripted fallback
+or weakened golden assertions were added.
+
+The existing Microsoft `phi3.5:latest` weights were reused through the bounded
+`fleetcharge-phi3.5:latest` alias. Two complete live runs passed in **351.47 seconds**
+and **408.38 seconds** respectively. Each run performed two actual-model reviews:
+the seeded 11-minute recommendation followed by `noAction` after changing the
+latest telemetry. Independent SDK assertions verified the persisted audit,
+queries, same-identity replacement, changed hashes and deletion.
+
+No new model weights were downloaded and unrelated services were not stopped.
+Verification is local evidence for this feature branch; it is not a hosted
+Actions result or authorization to merge.
+
+## Hosted branch extension verification - 2026-10-20
+
+[Run 39437337625](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39437337625)
+passed both jobs on `004-ollama-seeded-crud` at
+`94956496d2b319d085a044a5f80fd07c5f40dd68`:
+
+- Required gate: **133 passed, 0 failed/errors/skipped**, including deadline
+  propagation and invalid-limit tests; lint/format/types passed.
+- Real-model test: **1 passed, 0 failed/errors/skipped** in **1111.889 seconds**.
+  Two reviews produced 16 successful actual inference responses. Exact golden,
+  changed-telemetry `noAction` and independent output CRUD assertions all passed.
+- Runtime/model pin checks, readiness, emulator cleanup, job-owned Ollama shutdown
+  and both nonempty diagnostic uploads passed. Downloaded JUnit and model/server
+  artifacts were independently checked.
+
+The earlier hosted run reached the 300-second review timeout; explicit CPU-only
+900-second review limits resolved it without changing expected output. All
+publication stayed on this branch; no merge or main push was performed.
