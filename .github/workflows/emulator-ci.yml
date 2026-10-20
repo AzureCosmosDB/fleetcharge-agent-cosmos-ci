@@ -59,7 +59,6 @@ jobs:
       OLLAMA_NO_CLOUD: "1"
       OLLAMA_NUM_PARALLEL: "1"
       OLLAMA_MAX_LOADED_MODELS: "1"
-      OLLAMA_MODELS: ${{ runner.temp }}/fleetcharge-ollama-models
     steps:
       - name: Check out the tested revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -86,6 +85,7 @@ jobs:
           echo "c164ab8b1b28e2a247c29719b8e404c423c5b83ae64c3ab4e59d50c7ff7fc5e0  $RUNNER_TEMP/ollama-linux-amd64.tar.zst" | sha256sum --check
           tar --zstd -xf "$RUNNER_TEMP/ollama-linux-amd64.tar.zst" -C "$RUNNER_TEMP/fleetcharge-ollama"
           echo "$RUNNER_TEMP/fleetcharge-ollama/bin" >> "$GITHUB_PATH"
+          echo "OLLAMA_MODELS=$RUNNER_TEMP/fleetcharge-ollama-models" >> "$GITHUB_ENV"
       - name: Start isolated Ollama and poll readiness
         shell: bash
         run: |
