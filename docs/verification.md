@@ -43,6 +43,13 @@ requests/responses in `ollama-review-output.json`, model metadata in
 `ollama-model.json`, and 20 real provider calls in `ollama-inference.json`.
 Expected values are test assertions, not model completions.
 
+The runtime default, `.env.example` and local `.env` use Microsoft's documented
+public emulator key. Configuration tests verify the template matches defaults
+and process endpoint overrides take precedence for managed emulator runs.
+Follow [Microsoft's vNext guidance](https://learn.microsoft.com/azure/cosmos-db/emulator-linux)
+for protocol, readiness probes and authentication limitations. The older
+emulator's TLS/authentication behavior must not be assumed for vNext.
+
 The [Actions workflow](../.github/workflows/emulator-ci.yml) repeats the component
 and real-agent checks on separate Ubuntu runners. Inspect both jobs at the tested
 commit, their summaries and uploaded diagnostics. A successful artifact upload

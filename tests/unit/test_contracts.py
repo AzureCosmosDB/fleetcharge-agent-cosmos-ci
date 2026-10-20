@@ -93,3 +93,40 @@ def test_invalid_dotenv_value_fails_explicitly(tmp_path, monkeypatch):
     monkeypatch.setattr(settings_module, "ENV_FILE", path)
     with pytest.raises(ValueError, match="must have a value"):
         Settings.from_env()
+
+
+def test_documented_emulator_profile_matches_defaults(monkeypatch):
+    from base64 import b64decode
+
+    for name in ("COSMOS_ENDPOINT", "COSMOS_DATABASE", "COSMOS_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(
+        settings_module, "ENV_FILE", settings_module.ENV_FILE.with_name(".env.example")
+    )
+    config = Settings.from_env()
+    assert config.endpoint == Settings().endpoint == "http://127.0.0.1:18081"
+    assert config.database == Settings().database == "fleetchargetest-demo"
+    assert config.key == Settings().key == settings_module.EMULATOR_KEY
+    assert len(b64decode(config.key, validate=True)) == 64
+
+
+def test_cosmos_dotenv_settings_allow_explicit_process_overrides(tmp_path, monkeypatch):
+    path = tmp_path / ".env"
+    path.write_text(
+        f"COSMOS_ENDPOINT=http://127.0.0.1:18081\n"
+        f"COSMOS_DATABASE=fleetchargetest-local\nCOSMOS_KEY={settings_module.EMULATOR_KEY}\n"
+    )
+    monkeypatch.setattr(settings_module, "ENV_FILE", path)
+    for name in ("COSMOS_ENDPOINT", "COSMOS_DATABASE", "COSMOS_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    config = Settings.from_env()
+    assert config.key == settings_module.EMULATOR_KEY
+    assert config.database == "fleetchargetest-local"
+    assert config.endpoint == "http://127.0.0.1:18081"
+    monkeypatch.setenv("COSMOS_ENDPOINT", "http://127.0.0.1:49151")
+    monkeypatch.setenv("COSMOS_DATABASE", "fleetchargetest-process")
+    monkeypatch.setenv("COSMOS_KEY", "Y3VzdG9tLWVtdWxhdG9yLWtleQ==")
+    config = Settings.from_env()
+    assert config.endpoint == "http://127.0.0.1:49151"
+    assert config.database == "fleetchargetest-process"
+    assert config.key == "Y3VzdG9tLWVtdWxhdG9yLWtleQ=="

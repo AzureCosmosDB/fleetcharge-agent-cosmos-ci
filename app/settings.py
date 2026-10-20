@@ -10,7 +10,9 @@ from dotenv import dotenv_values
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 DEMO_TIME = "2026-10-19T12:30:00-07:00"
 # Public emulator-only test key; not a production credential or an authorization boundary.
-EMULATOR_KEY = "ZW11bGF0b3Itb25seQ=="
+EMULATOR_KEY = (
+    "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+)
 
 
 @dataclass(frozen=True)

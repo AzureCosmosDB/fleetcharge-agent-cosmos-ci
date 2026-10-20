@@ -36,6 +36,64 @@ The local file is ignored by Git. Start Ollama through its desktop app or
 `ollama serve` if it is not already running. Application/test commands never
 download weights automatically or silently select another model.
 
+## Configure the emulator connection
+
+The local `.env` and committed `.env.example` contain the Cosmos SDK settings:
+
+```dotenv
+COSMOS_ENDPOINT=http://127.0.0.1:18081
+COSMOS_DATABASE=fleetchargetest-demo
+COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+```
+
+This is Microsoft's [well-known public emulator key](https://learn.microsoft.com/azure/cosmos-db/emulator#authentication),
+not an Azure account credential. The
+[vNext authentication guidance](https://learn.microsoft.com/azure/cosmos-db/emulator-linux#authentication)
+states that vNext does not enforce authentication, even though SDK configuration
+requires a key. A passing emulator test does not validate authorization.
+
+There are two ways to use these settings:
+
+- **Managed demo and CI:** `scripts.demo`, `scripts.ci` and `scripts.test_ollama`
+  start their own digest-pinned emulator on dynamically assigned loopback ports.
+  They override `COSMOS_ENDPOINT` for that run and print the actual endpoint.
+  They still load the configured key. Each test fixture uses a unique database;
+  the demo uses `COSMOS_DATABASE`. You do not need a separate running emulator.
+- **Direct startup:** use the fixed endpoint above with an emulator you start
+  explicitly. Seed it, then run Uvicorn directly. This mode keeps data until you
+  remove the database or stop a disposable container.
+
+For direct startup, run this in a dedicated PowerShell terminal:
+
+```powershell
+$image = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator@sha256:0bd6dbab98295718c85399ad27c38d45733060086528711594a7d52bafcb3447"
+docker run --rm --name fleetcharge-local `
+    -p 127.0.0.1:18081:8081 -p 127.0.0.1:18080:8080 `
+    $image --protocol http
+```
+
+In another terminal, wait until `http://127.0.0.1:18080/ready` returns HTTP 200,
+then run from the source checkout:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:18080/ready
+uv run --locked python -m scripts.seed_cosmos
+uv run --locked uvicorn app.api:app --host 127.0.0.1 --port 8001
+```
+
+If readiness has not returned 200, wait and check again before seeding. Do not
+reuse or remove another application's container if a port or name is occupied.
+Stop Uvicorn with Ctrl+C; use `uv run --locked python -m scripts.cleanup_cosmos`
+to delete only the configured `fleetchargetest-` database while the emulator is
+still running. Stop your `docker run` terminal with Ctrl+C when finished.
+
+The container's SDK port is 8081; 18081 is the host mapping. Its readiness port
+is 8080, mapped to 18080. HTTP mode is supported for this Python sample by the
+[vNext quickstart](https://learn.microsoft.com/azure/cosmos-db/emulator-linux#running).
+It does not disable TLS verification; HTTPS requires the documented certificate
+setup. Both the app and container are loopback-only. Settings reject cloud
+Cosmos endpoints and non-test database names to prevent accidental production use.
+
 ## Run the same complete gate locally
 
 ```powershell
@@ -179,7 +237,6 @@ It verifies the stored dispatch snapshot and audit through independent SDK reads
 then stops the server and its owned emulator. `.env.example` lists optional process
 environment settings. The fixed sample clock keeps dated seed data repeatable;
 it is not a Cosmos DB or Ollama requirement.
-Legacy `AGENT_MODEL_MODE=scripted` is rejected explicitly.
 
 ### API reference and failures
 
@@ -213,6 +270,12 @@ a 180-second maximum. Do not disable validation to accept an incorrect answer.
 
 ## GitHub Actions
 
+Fork or copy the repository into your own GitHub account. Enable Actions if
+GitHub prompts you, then open a pull request or use **Actions > Cosmos emulator
+CI > Run workflow**. You do not need Azure credentials, repository secrets or
+maintainer-specific variables. GitHub may require approval for a first-time
+contributor's fork pull request.
+
 The [workflow](.github/workflows/emulator-ci.yml) runs two independent jobs for
 pull requests, main pushes and manual dispatch:
 
@@ -234,6 +297,9 @@ The live transcript contains 20 completed real inference calls: four grounded
 questions and two eight-turn charging reviews. Direct component tests cover
 feed validation, replacement, partition isolation and missing source without
 pretending to run a model.
+Pull requests are checked before merge, and push checks run on `main`.
+Manual dispatch can test a selected revision. The workflow contains no
+sample-specific feature-branch push filter.
 
 Generate local reports after their respective tests:
 
@@ -250,19 +316,14 @@ checkout so its seed fixtures are available.
 
 The emulator does not enforce authentication. Its public SDK test key is not a
 production secret or an authorization test. Keep it on loopback.
-The local API has no authentication and binds only to loopback. Do not expose it
-as a production feed. Production requires authenticated publishers and callers,
-an event-ordering policy, Cosmos/Foundry identities, Entra authorization and
-cloud performance/RU validation.
-
-During development, CI verifies changes before merge. After development is
-complete, a separate CD workflow can authenticate to Azure through GitHub OIDC,
-deploy the app and run cloud smoke tests. This repository does not deploy Azure
-resources or configure production credentials.
+This is a local-development and CI example, not a production application. The
+API has no authentication and binds only to loopback; do not expose it publicly.
+The repository does not deploy Azure resources or configure production credentials.
+You can apply its CI pattern to your own project and add CD separately when
+that project is ready to deploy.
 
 Dependencies use the configured public Microsoft feed and a hashed lock.
 See [requirements](docs/app-requirements.md), [Spec Kit guidance](docs/speckit-walkthrough.md),
 [real-model requirements](specs/005-real-model-app-tests/spec.md),
 [dispatch feed requirements](specs/006-dispatch-feed/spec.md) and
-[verification evidence](docs/verification.md). Historical specs record the earlier
-scripted approach; feature 005 and constitution 1.1.0 supersede it.
+[verification guide](docs/verification.md).
