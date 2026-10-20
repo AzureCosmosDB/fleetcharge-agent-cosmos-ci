@@ -159,6 +159,12 @@ The CPU-only hosted job explicitly allows 900 seconds per review, a 1900-second
 test-process deadline and a 45-minute job deadline. The local default remains
 300 seconds per review; neither mode retries an incorrect model answer.
 
+[Verified branch run 39437337625](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39437337625)
+passed **133 deterministic tests** plus the complete live-model test on
+`9495649`. The live job took about 21 minutes on CPU, versus about 90 seconds for
+the deterministic job. Both uploaded nonempty results and cleaned up their owned
+resources. This is branch evidence, not a merged-main claim.
+
 See [verification evidence](docs/verification.md) for actual local/hosted outcomes
 and the intentional failing-depot-query demonstration.
 The implementation PR is merged: local, hosted PR and merged-main gates passed all

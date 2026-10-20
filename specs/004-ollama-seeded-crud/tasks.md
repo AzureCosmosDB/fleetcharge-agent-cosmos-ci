@@ -6,7 +6,7 @@
 - [x] T004 (FR-006): Add the bounded optional runner and reader documentation.
 - [x] T005 (all): Run required gate and actual local LLM test; push verified work.
 - [x] T006 (FR-007): Wire isolated pinned Ollama provisioning/readiness and the live test into branch/manual Actions.
-- [ ] T007 (FR-007): Push this branch only and verify both hosted jobs; record actual outcomes without merging.
+- [x] T007 (FR-007): Push this branch only and verify both hosted jobs; record actual outcomes without merging.
 
 ## Verification
 
@@ -35,3 +35,22 @@ queries, same-identity replacement, changed hashes and deletion.
 No new model weights were downloaded and unrelated services were not stopped.
 Verification is local evidence for this feature branch; it is not a hosted
 Actions result or authorization to merge.
+
+## Hosted branch extension verification - 2026-10-20
+
+[Run 39437337625](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/runs/39437337625)
+passed both jobs on `004-ollama-seeded-crud` at
+`94956496d2b319d085a044a5f80fd07c5f40dd68`:
+
+- Required gate: **133 passed, 0 failed/errors/skipped**, including deadline
+  propagation and invalid-limit tests; lint/format/types passed.
+- Real-model test: **1 passed, 0 failed/errors/skipped** in **1111.889 seconds**.
+  Two reviews produced 16 successful actual inference responses. Exact golden,
+  changed-telemetry `noAction` and independent output CRUD assertions all passed.
+- Runtime/model pin checks, readiness, emulator cleanup, job-owned Ollama shutdown
+  and both nonempty diagnostic uploads passed. Downloaded JUnit and model/server
+  artifacts were independently checked.
+
+The earlier hosted run reached the 300-second review timeout; explicit CPU-only
+900-second review limits resolved it without changing expected output. All
+publication stayed on this branch; no merge or main push was performed.
