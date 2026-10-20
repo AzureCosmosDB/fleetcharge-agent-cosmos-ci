@@ -51,7 +51,7 @@ jobs:
     name: Ollama expected output and CRUD
     if: github.ref == 'refs/heads/004-ollama-seeded-crud' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       UV_PYTHON_DOWNLOADS: never
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
@@ -114,7 +114,7 @@ jobs:
           PY
           ollama create fleetcharge-phi3.5 -f scripts/Ollama.modelfile
       - name: Verify actual LLM expected responses and persisted output CRUD
-        run: uv run --no-sync python -m scripts.test_ollama --model fleetcharge-phi3.5:latest
+        run: uv run --no-sync python -m scripts.test_ollama --model fleetcharge-phi3.5:latest --review-timeout 900
       - name: Stop only the job-owned Ollama process
         if: always()
         shell: bash

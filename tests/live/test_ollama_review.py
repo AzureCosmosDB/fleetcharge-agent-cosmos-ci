@@ -13,9 +13,11 @@ from app.schemas import ReviewResponse
 REQUEST = {"depotId": "SEA-01", "deliveryWaveId": "wave-2026-10-19-1400"}
 
 
-async def test_local_llm_output_create_read_query_update_delete(store):
+async def test_local_llm_output_create_read_query_update_delete(store, request):
     client, settings, repo = store
-    settings = replace(settings, mode="ollama", timeout_seconds=300)
+    settings = replace(
+        settings, mode="ollama", timeout_seconds=request.config.getoption("--ollama-review-timeout")
+    )
     app = create_app(settings, client)
     golden = json.loads(
         (Path(__file__).parents[1] / "fixtures" / "expected-golden.json").read_text()
@@ -37,7 +39,9 @@ async def test_local_llm_output_create_read_query_update_delete(store):
 
     assert await audits() == []
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test", timeout=310
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://test",
+        timeout=settings.timeout_seconds + 10,
     ) as http:
         response = await http.post("/agent/review-delivery-wave", json=REQUEST)
         assert response.status_code == 200, response.text

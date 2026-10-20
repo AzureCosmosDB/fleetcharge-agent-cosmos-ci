@@ -69,6 +69,13 @@ Run the unchanged golden/output-CRUD assertions with bounded deadlines and fail
 on any timeout or unexpected output. Preserve runtime/provisioning/test/emulator
 logs even on failure and terminate the exact job-owned PID in an always step.
 
+The first hosted inference run reached the 300-second review deadline after
+five successful model turns on a one-physical-core CPU runner. Keep local defaults
+at 300 seconds; explicitly select a bounded 900-second per-review deadline for
+CPU-only CI, with 1900 seconds for the two-review test process and 45 minutes for
+the job. Test deadline propagation and invalid limits without contacting services.
+Do not alter golden assertions, prompts or model output to conceal timeouts.
+
 See [tasks and actual outcomes](tasks.md). The actual bounded Phi-3.5 live test
 passed both reviews and persisted-output CRUD in two runs (351.47 and 408.38
 seconds). The required local gate passed 128 tests. Its alias digest

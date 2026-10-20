@@ -47,10 +47,14 @@ def test_ollama_configuration_from_env(monkeypatch):
     assert settings.timeout_seconds == 300
 
 
-@pytest.mark.parametrize("mode,deadline", [("scripted", 61), ("ollama", 301), ("ollama", 0)])
+@pytest.mark.parametrize("mode,deadline", [("scripted", 61), ("ollama", 901), ("ollama", 0)])
 def test_review_deadlines_remain_bounded(mode, deadline):
     with pytest.raises(ValueError, match="deadline"):
         Settings(mode=mode, timeout_seconds=deadline)
+
+
+def test_cpu_only_live_review_deadline_is_explicitly_bounded():
+    assert Settings(mode="ollama", timeout_seconds=900).timeout_seconds == 900
 
 
 def test_rejects_naive_clock():

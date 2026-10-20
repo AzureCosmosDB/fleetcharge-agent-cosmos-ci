@@ -100,7 +100,8 @@ and queries the audit independently, changes telemetry to 90%, reviews again to
 verify the same audit is updated to `noAction`, then deletes it and proves it is
 absent. CRUD here is test-side SDK work, not destructive tools exposed to the LLM.
 
-Each live review has a 300-second deadline. Missing models, invalid tool calls,
+Each local live review defaults to a 300-second deadline. `--review-timeout`
+can explicitly allow up to 900 seconds on CPU-only machines. Missing models, invalid tool calls,
 incorrect output and timeouts fail the test: there is no scripted fallback.
 Results, model identity and emulator logs are saved under `.artifacts`. Default
 pytest collection excludes these explicitly opt-in tests, not the database tests.
@@ -154,6 +155,9 @@ back to scripted responses. The deterministic job runs independently. Each job
 uploads separate diagnostics on success or failure; the live job stops only its
 own Ollama process. CI provisions its own weights on an ephemeral runner; local
 test commands still require an already-installed model.
+The CPU-only hosted job explicitly allows 900 seconds per review, a 1900-second
+test-process deadline and a 45-minute job deadline. The local default remains
+300 seconds per review; neither mode retries an incorrect model answer.
 
 See [verification evidence](docs/verification.md) for actual local/hosted outcomes
 and the intentional failing-depot-query demonstration.

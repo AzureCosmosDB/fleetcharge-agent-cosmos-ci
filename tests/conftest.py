@@ -13,6 +13,7 @@ from scripts.seed_cosmos import seed
 
 def pytest_addoption(parser):
     parser.addoption("--ollama", action="store_true", help="Include actual local-model tests")
+    parser.addoption("--ollama-review-timeout", type=int, default=300)
 
 
 def pytest_ignore_collect(collection_path, config):

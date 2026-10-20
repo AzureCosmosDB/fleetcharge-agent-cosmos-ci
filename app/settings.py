@@ -51,7 +51,7 @@ class Settings:
             raise ValueError("Supply an installed local Ollama model, not a cloud model")
         if self.clock.tzinfo is None or self.clock.utcoffset() is None:
             raise ValueError("Review time must include a timezone offset")
-        limit = 300 if self.mode == "ollama" else 60
+        limit = 900 if self.mode == "ollama" else 60
         if not 0 < self.timeout_seconds <= limit:
             raise ValueError(f"Review deadline must be within {limit} seconds")
 

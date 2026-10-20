@@ -15,13 +15,14 @@ from scripts.emulator import ROOT, Emulator
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", default=os.environ.get("OLLAMA_MODEL", Settings.ollama_model))
+    parser.add_argument("--review-timeout", type=int, default=300)
     args = parser.parse_args()
     try:
         settings = Settings(
             mode="ollama",
             ollama_model=args.model,
             ollama_endpoint=os.environ.get("OLLAMA_ENDPOINT", Settings.ollama_endpoint),
-            timeout_seconds=300,
+            timeout_seconds=args.review_timeout,
         )
         url = settings.ollama_endpoint.removesuffix("/").removesuffix("/v1")
         with httpx.Client(timeout=10, trust_env=False) as http:
@@ -66,10 +67,12 @@ def main() -> int:
                     "--no-sync",
                     "pytest",
                     "--ollama",
+                    "--ollama-review-timeout",
+                    str(args.review_timeout),
                     str(ROOT / "tests" / "live"),
                     "--junitxml=.artifacts/ollama-results.xml",
                 ],
-                timeout=700,
+                timeout=2 * args.review_timeout + 100,
                 env=env,
             )
     except Exception:
