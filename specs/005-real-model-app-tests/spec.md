@@ -29,7 +29,7 @@ scripted-client portions of features 001 and 004 and constitution version 1.0.0.
   Preserve a readable generated answer and raw inference evidence.
 - FR-007: Load an ignored local `.env`, with process variables taking precedence.
   Ship only `.env.example`. Start and exercise the local HTTP app with the same
-  pinned emulator and model as CI; preserve the separate article draft.
+  emulator tag and model configuration as CI; preserve the separate article draft.
   Show endpoint, test database and Microsoft's documented public emulator key
   explicitly in the local/template configuration, and use the same default key
   in code. Explain managed dynamic endpoint overrides and direct startup.

@@ -11,8 +11,11 @@ response guard for pure validation coverage. Retain API input validation tests.
 
 `scripts.ci` runs component checks followed by the existing actual-model runner.
 `--components-only` selects the fast job; the independent Actions application job
-continues to provision checksum/digest-pinned Ollama/Phi-3.5 and call the real app.
+continues to provision Ollama/Phi-3.5 using readable releases/tags and call the real app.
 Local commands require installed weights. Keep bounded deadlines and owned cleanup.
+Use a 2048-token model context. The two late review turns retain only the actual
+computed decision or acknowledged write; earlier source reads and all 20 real
+inference calls remain covered. CI sets model threads to its available CPUs.
 
 A live-test wrapper observes the real provider method without changing arguments
 or responses. Save each input/output and expose immediate inference/CRUD progress

@@ -56,7 +56,7 @@ class OllamaStructuredTools(ChatMiddleware):
             }
             instruction = (
                 f"Return a JSON tool call with name={function.name} and an arguments object "
-                f"matching this schema: {json.dumps(arguments_schema)}. "
+                f"matching this schema: {json.dumps(arguments_schema, separators=(',', ':'))}. "
                 f"{function.description} Derive argument values only from the original "
                 "request and previous tool results. Return JSON, not a native tool call."
             )
@@ -91,12 +91,22 @@ class OllamaStructuredTools(ChatMiddleware):
                 except json.JSONDecodeError as exc:
                     raise ValueError("The previous tool did not return valid JSON") from exc
                 results.append({"tool": names[content.call_id], "result": result})
+        if function is None or function.name == "write_charging_recommendation":
+            expected = "find_available_chargers" if function else "write_charging_recommendation"
+            if not results or results[-1]["tool"] != expected:
+                raise ValueError(f"Expected the actual {expected} result before model inference")
+            # These turns copy the computed decision or acknowledged write, not earlier inputs.
+            results = results[-1:]
         context.messages = [
             message for message in context.messages if message.role in {"system", "user"}
         ] + [
             Message(
                 "user",
-                [Content.from_text(f"Tool results: {json.dumps(results)}\n{instruction}")],
+                [
+                    Content.from_text(
+                        f"Tool results: {json.dumps(results, separators=(',', ':'))}\n{instruction}"
+                    )
+                ],
             )
         ]
         try:

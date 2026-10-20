@@ -79,6 +79,7 @@ async def test_real_agent_grounded_counts_and_output_crud(store, request, monkey
                 model=response.model,
                 responseId=response.response_id,
                 rawResponse="".join(message.text for message in response.messages),
+                usageDetails=response.usage_details,
                 durationSeconds=round(time.monotonic() - started, 3),
             )
             print(

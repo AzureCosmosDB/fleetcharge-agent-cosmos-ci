@@ -136,6 +136,66 @@ async def test_structured_adapter_preserves_real_tool_results():
     await OllamaStructuredTools(request).process(context, respond)
 
 
+@pytest.mark.parametrize("terminal", [False, True])
+@pytest.mark.parametrize("valid_source", [False, True])
+async def test_late_review_turns_use_only_the_actual_required_result(terminal, valid_source):
+    context = make_context()
+
+    async def write_charging_recommendation(
+        depotId: str, deliveryWaveId: str, decision: dict[str, object]
+    ) -> None:
+        """Persist the computed decision unchanged."""
+
+    context.options["tools"] = (
+        []
+        if terminal
+        else [
+            FunctionTool(name="write_charging_recommendation", func=write_charging_recommendation)
+        ]
+    )
+    expected = "write_charging_recommendation" if terminal else "find_available_chargers"
+    decision = {"recommendation": "noAction", "assignments": [], "routeRisks": [], "evidence": []}
+    for index, (name, result) in enumerate(
+        [
+            ("get_latest_telemetry", {"batteryPercent": 58}),
+            (expected if valid_source else "get_delivery_wave", decision),
+        ]
+    ):
+        context.messages.extend(
+            [
+                Message(
+                    "assistant",
+                    [Content.from_function_call(str(index), name, arguments={})],
+                ),
+                Message(
+                    "tool",
+                    [Content.from_function_result(str(index), result=json.dumps(result))],
+                ),
+            ]
+        )
+
+    async def respond():
+        assert valid_source, "Missing required context must fail before contacting the model"
+        results = json.loads(context.messages[-1].text.split("\n", 1)[0][len("Tool results: ") :])
+        assert results == [{"tool": expected, "result": decision}]
+        proposal = {
+            "name": "write_charging_recommendation",
+            "arguments": {"depotId": "SEA-01", "deliveryWaveId": "wave-test", "decision": decision},
+        }
+        context.result = ChatResponse(
+            messages=Message(
+                "assistant", [Content.from_text(json.dumps(decision if terminal else proposal))]
+            )
+        )
+
+    adapter = OllamaStructuredTools(ReviewRequest(depotId="SEA-01", deliveryWaveId="wave-test"))
+    if valid_source:
+        await adapter.process(context, respond)
+    else:
+        with pytest.raises(ValueError, match=f"actual {expected} result"):
+            await adapter.process(context, respond)
+
+
 async def test_structured_adapter_stops_on_failed_tool_before_model_call():
     context = make_context()
     context.messages.extend(

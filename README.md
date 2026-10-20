@@ -55,7 +55,7 @@ requires a key. A passing emulator test does not validate authorization.
 There are two ways to use these settings:
 
 - **Managed demo and CI:** `scripts.demo`, `scripts.ci` and `scripts.test_ollama`
-  start their own digest-pinned emulator on dynamically assigned loopback ports.
+  start their own vNext emulator on dynamically assigned loopback ports.
   They override `COSMOS_ENDPOINT` for that run and print the actual endpoint.
   They still load the configured key. Each test fixture uses a unique database;
   the demo uses `COSMOS_DATABASE`. You do not need a separate running emulator.
@@ -66,7 +66,7 @@ There are two ways to use these settings:
 For direct startup, run this in a dedicated PowerShell terminal:
 
 ```powershell
-$image = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator@sha256:0bd6dbab98295718c85399ad27c38d45733060086528711594a7d52bafcb3447"
+$image = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-latest"
 docker run --rm --name fleetcharge-local `
     -p 127.0.0.1:18081:8081 -p 127.0.0.1:18080:8080 `
     $image --protocol http
@@ -280,10 +280,10 @@ The [workflow](.github/workflows/emulator-ci.yml) runs two independent jobs for
 pull requests, main pushes and manual dispatch:
 
 - **Emulator component checks:** locked install, quality gates and real SDK/tool tests.
-- **Real agent, grounded answers and CRUD:** checksum-verified Ollama runtime,
-  digest-verified Phi-3.5, a separate emulator and the actual application test.
+- **Real agent, grounded answers and CRUD:** Ollama, Microsoft Phi-3.5,
+  a separate emulator and the actual application test.
 
-CI uses a disposable Ubuntu runner, loopback services, pinned actions and
+CI uses a disposable Ubuntu runner, loopback services, supported action release tags and
 `contents: read`. It needs no Azure subscription, inference API key or repository
 secret. Both jobs fail on incorrect results; configure repository rules to make
 their checks mandatory before merge.
@@ -297,6 +297,13 @@ The live transcript contains 20 completed real inference calls: four grounded
 questions and two eight-turn charging reviews. Direct component tests cover
 feed validation, replacement, partition isolation and missing source without
 pretending to run a model.
+The final review turns send only the actual computed decision or acknowledged
+write they need, rather than resending every source document. The model uses a
+2048-token context; CI sets its thread count to the runner's available CPUs.
+These reduce inference work without skipping tests or replacing model responses.
+Action major-version tags, `vnext-latest` and `phi3.5:latest` can advance upstream.
+The locked Python dependencies and full tests remain the compatibility check;
+this sample does not claim its environment is immutable.
 Pull requests are checked before merge, and push checks run on `main`.
 Manual dispatch can test a selected revision. The workflow contains no
 sample-specific feature-branch push filter.

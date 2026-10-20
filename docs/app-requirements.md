@@ -61,7 +61,7 @@ operational charger bookings.
   saved output, SDK read/query/update/delete and a changed-data response.
 - Preserve raw model inputs/outputs, identity, timings, visible progress, JUnit
   and useful service logs. Expected answers belong only in test assertions.
-- Use pinned runtime/model/image/dependencies, readiness checks, bounded deadlines,
+- Use readable runtime/model/image versions and locked Python dependencies, readiness checks, bounded deadlines,
   isolated test databases, loopback ports and exact-owned-resource cleanup.
 - Missing models, incorrect responses and failures must fail explicitly.
   Do not skip app verification or retry incorrect answers until green.

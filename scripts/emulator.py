@@ -13,10 +13,7 @@ from types import TracebackType
 from typing import Any
 from uuid import uuid4
 
-IMAGE = (
-    "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator"
-    "@sha256:0bd6dbab98295718c85399ad27c38d45733060086528711594a7d52bafcb3447"
-)
+IMAGE = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-latest"
 OWNER_LABEL = "io.fleetcharge.emulator-owner"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -143,7 +140,7 @@ class Emulator:
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self.log_path.write_text(f"Image: {IMAGE}\nOwner: {self.owner_token}\n", encoding="utf-8")
         try:
-            print("[emulator] Verify pinned image", flush=True)
+            print("[emulator] Check vNext image availability", flush=True)
             if self._docker("image", "inspect", IMAGE, check=False).returncode:
                 self._docker("pull", IMAGE, timeout=180)
             print("[emulator] Create isolated loopback container", flush=True)

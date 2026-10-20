@@ -30,7 +30,7 @@ test-results*.xml
 # Local configuration; keep the documented example
 .env
 .env.*
-!.env.example
+!/.env.example
 
 # Local writing helper, not part of the teaching app
 /.github/skills/humanizer/
