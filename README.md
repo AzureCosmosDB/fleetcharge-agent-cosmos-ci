@@ -277,7 +277,8 @@ maintainer-specific variables. GitHub may require approval for a first-time
 contributor's fork pull request.
 
 The [workflow](.github/workflows/emulator-ci.yml) runs two independent jobs for
-pull requests, main pushes and manual dispatch:
+pull-request creation, reopening and commits pushed to an open PR's branch,
+plus manual dispatch:
 
 - **Emulator component checks:** locked install, quality gates and real SDK/tool tests.
 - **Real agent, grounded answers and CRUD:** Ollama, Microsoft Phi-3.5,
@@ -304,9 +305,10 @@ These reduce inference work without skipping tests or replacing model responses.
 Action major-version tags, `vnext-latest` and `phi3.5:latest` can advance upstream.
 The locked Python dependencies and full tests remain the compatibility check;
 this sample does not claim its environment is immutable.
-Pull requests are checked before merge, and push checks run on `main`.
-Manual dispatch can test a selected revision. The workflow contains no
-sample-specific feature-branch push filter.
+Pull requests are checked before merge, regardless of the source branch name.
+The `synchronize` activity reruns both jobs when commits are pushed to that
+PR's branch. Manual dispatch can test a selected revision. There is no separate
+push trigger for main or branches without an open PR.
 
 Generate local reports after their respective tests:
 

@@ -54,7 +54,8 @@ The [Actions workflow](../.github/workflows/emulator-ci.yml) repeats the compone
 and real-agent checks on separate Ubuntu runners. Inspect both jobs at the tested
 commit, their summaries and uploaded diagnostics. A successful artifact upload
 alone is not a successful test. Configure repository rules to require both checks
-before merge, then inspect the main push run as well.
+before merge. The workflow reruns when a commit is pushed to an open PR's
+branch; it does not start another run merely because the PR was merged.
 
 ## What these checks do not prove
 
