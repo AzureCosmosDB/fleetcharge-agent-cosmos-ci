@@ -6,7 +6,7 @@
 [![Azure Cosmos DB Emulator](https://img.shields.io/badge/Azure-Cosmos_DB_Emulator-0078D4)](https://learn.microsoft.com/azure/cosmos-db/emulator-linux)
 [![Ollama](https://img.shields.io/badge/Ollama-Phi--3.5-000000?logo=ollama&logoColor=white)](https://ollama.com/library/phi3.5)
 
-[![Open in Dev Containers](.devcontainer/open-dev-container.svg)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
+[![Open in Dev Containers](https://img.shields.io/badge/Dev_Container-Open_in_VS_Code-007ACC?logo=docker&logoColor=white)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
 [![VS Code](https://img.shields.io/badge/VS_Code-007ACC)](https://code.visualstudio.com/)
 
 FleetCharge is a small Python sample for testing an agent before deployment.
