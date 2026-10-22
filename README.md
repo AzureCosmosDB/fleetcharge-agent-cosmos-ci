@@ -5,9 +5,10 @@
 [![Microsoft Agent Framework](https://img.shields.io/badge/Microsoft-Agent_Framework-0078D4)](https://github.com/microsoft/agent-framework)
 [![Azure Cosmos DB Emulator](https://img.shields.io/badge/Azure-Cosmos_DB_Emulator-0078D4)](https://learn.microsoft.com/azure/cosmos-db/emulator-linux)
 [![Ollama](https://img.shields.io/badge/Ollama-Phi--3.5-000000?logo=ollama&logoColor=white)](https://ollama.com/library/phi3.5)
-
 [![Open in Dev Containers](https://img.shields.io/badge/Dev_Container-Open_in_VS_Code-007ACC?logo=docker&logoColor=white)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
 [![VS Code](https://img.shields.io/badge/VS_Code-007ACC)](https://code.visualstudio.com/)
+[![Open in Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Browser-181717?logo=github&logoColor=white)](https://codespaces.new/jaydestro/fleetcharge-agent-cosmos-ci)
+[![MIT License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 FleetCharge is a small Python sample for testing an agent before deployment.
 Microsoft Agent Framework runs the agent, Ollama serves Microsoft Phi-3.5 locally,
@@ -23,6 +24,12 @@ cite the exact bay and update reference stored in Cosmos DB.
 
 ## Open a ready-to-use development environment
 
+If you use GitHub Codespaces, click **Open in Codespaces** above to open a browser
+workspace with this repository's existing
+[dev container configuration](.devcontainer/devcontainer.json). Then follow the
+model setup commands below.
+
+For local development, click **Open in Dev Containers**.
 Install [VS Code](https://code.visualstudio.com/) and its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers),
 and start Docker with Linux containers on an x86-64 Windows or Linux host. The
@@ -48,8 +55,8 @@ run `ollama pull phi3.5:latest` and
 with the same demo and CI commands. Setup already ran `uv sync` and prepared `.env`.
 VS Code forwards the API's port 8001; use the address in its **Ports** panel if
 that host port is occupied. The emulator and model ports are not
-automatically forwarded. This is a local Dev Containers path, not a validated
-GitHub Codespaces configuration.
+automatically forwarded. In Codespaces, use **Open in Browser** for port 8001
+in the **Ports** panel.
 
 ## Prerequisites
 

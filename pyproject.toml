@@ -2,6 +2,7 @@
 name = "fleetcharge-agent-cosmos-ci"
 version = "0.1.0"
 description = "A real agent workload for learning Cosmos DB emulator-backed CI"
+license = "MIT"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "agent-framework-core==1.21.0",
