@@ -15,6 +15,10 @@ uv run --locked python -m scripts.demo --smoke
 The component gate checks formatting, lint, types, rules, tool behavior and
 real Cosmos SDK operations. It starts its own emulator and does not invoke a
 substitute model. The build produces source and wheel distributions.
+The strict type-check allows 600 seconds for a cold dependency cache; lint and
+formatting remain bounded at 180 seconds each. A timeout still fails the gate.
+The distribution regression builds a synthetic project containing local `.env`
+overrides and checks the archives exclude them while retaining `.env.example`.
 
 The actual-model test checks:
 

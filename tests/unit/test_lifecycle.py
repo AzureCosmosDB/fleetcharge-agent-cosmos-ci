@@ -231,6 +231,10 @@ def test_ci_runs_all_gates_and_cleans_after_pytest(
         assert kwargs["timeout"] > 0
         assert kwargs["shell"] is False
         phases.append(command)
+        if "mypy" in command:
+            assert kwargs["timeout"] == 600
+        elif "ruff" in command:
+            assert kwargs["timeout"] == 180
         if "pytest" in command:
             assert kwargs["env"]["COSMOS_ENDPOINT"] == "http://127.0.0.1:49151"
             assert kwargs["env"]["COSMOS_READY_URL"] == "http://127.0.0.1:49152/ready"

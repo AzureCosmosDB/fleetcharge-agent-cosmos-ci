@@ -1,7 +1,41 @@
+import shutil
+import subprocess
+import tarfile
+import zipfile
+from pathlib import Path
+
 import pytest
 
 from app import settings as settings_module
 from app.settings import Settings
+
+
+def test_distributions_exclude_local_environment_files(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    project = tmp_path / "project"
+    project.mkdir()
+    for name in ("pyproject.toml", ".env.example"):
+        shutil.copyfile(root / name, project / name)
+    for package in ("app", "scripts"):
+        (project / package).mkdir()
+        (project / package / "__init__.py").write_text("", encoding="utf-8")
+    local_files = {".env", ".env.local", ".env.test"}
+    for name in local_files:
+        (project / name).write_text("TEST_ONLY=not-a-credential\n", encoding="utf-8")
+    output = tmp_path / "dist"
+    subprocess.run(
+        ["uv", "build", "--out-dir", str(output)],
+        cwd=project,
+        timeout=180,
+        check=True,
+    )
+    with tarfile.open(next(output.glob("*.tar.gz"))) as archive:
+        source_files = {name.split("/", 1)[1] for name in archive.getnames() if "/" in name}
+    assert ".env.example" in source_files
+    assert not local_files & source_files
+    with zipfile.ZipFile(next(output.glob("*.whl"))) as archive:
+        assert not local_files & set(archive.namelist())
+    assert all((project / name).is_file() for name in local_files)
 
 
 @pytest.mark.parametrize("endpoint", ["https://example.com", "http://127.0.0.1.evil", "file:///x"])

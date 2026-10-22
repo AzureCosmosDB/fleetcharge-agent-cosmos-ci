@@ -29,12 +29,12 @@ def main() -> int:
     (artifacts / "emulator.log").write_text("Emulator has not started.\n", encoding="utf-8")
     try:
         run_phase("Locked dependencies", ["uv", "sync", "--locked", "--extra", "test"], timeout=300)
-        for label, phase_args in (
-            ("Lint", ["ruff", "check", "app", "scripts", "tests"]),
-            ("Formatting", ["ruff", "format", "--check", "app", "scripts", "tests"]),
-            ("Types", ["mypy", "app", "scripts"]),
+        for label, phase_args, timeout in (
+            ("Lint", ["ruff", "check", "app", "scripts", "tests"], 180),
+            ("Formatting", ["ruff", "format", "--check", "app", "scripts", "tests"], 180),
+            ("Types", ["mypy", "app", "scripts"], 600),
         ):
-            run_phase(label, ["uv", "run", "--no-sync", *phase_args])
+            run_phase(label, ["uv", "run", "--no-sync", *phase_args], timeout=timeout)
         with Emulator(log_path=artifacts / "emulator.log") as emulator:
             env = os.environ.copy()
             env.update(

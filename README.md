@@ -102,7 +102,8 @@ uv run --locked --extra test python -m scripts.ci
 
 This checks lint, formatting and types, runs direct rules/tool/SDK component
 checks against an isolated emulator, then runs the actual-model application test.
-The app test:
+A cold type-check can take several minutes; its timeout is 600 seconds. Lint and
+format checks retain their 180-second limits. The app test:
 
 1. Asks for the seeded dispatch bay, publishes `dispatch-007`/`BAY-7` through the
    feed API, independently reads the stored update, then asks the same question.
@@ -149,6 +150,25 @@ Keep the terminal open while sending requests. Restarting the demo reseeds the
 fixtures, including the original `BAY-2` dispatch snapshot; it is disposable.
 
 ### Publish and ask about a dispatch update
+
+With the demo running and a fresh `BAY-2` seed, run the complete before/update/after
+check in a second Bash terminal from the repository directory:
+
+```bash
+bash scripts/ask-dispatch.sh
+```
+
+[`scripts/ask-dispatch.sh`](scripts/ask-dispatch.sh) uses `curl` and `jq` to ask
+about the initial bay, publish `BAY-7 / dispatch-007`, and ask the same question
+again. It prints both actual responses and exits nonzero on an HTTP error or a
+failed assertion. Restart the demo before repeating it; the script leaves the
+updated record in place. It requires `jq` and curl with `--fail-with-body` support.
+
+If port 8001 is occupied, start the demo with `--port 8002` and pass that base URL:
+
+```bash
+bash scripts/ask-dispatch.sh http://127.0.0.1:8002
+```
 
 The following examples run in a second PowerShell terminal. First, ask about
 the seeded bay:
@@ -318,6 +338,9 @@ uv run --no-sync python -m scripts.ci_report --suite ollama
 ```
 
 Build the source distribution and wheel with `uv build`; output goes to `dist`.
+Source distributions retain `.env.example` but exclude local `.env` files and
+`.env.*` overrides.
+
 The component CI job also builds both distributions. Run the demo from the source
 checkout so its seed fixtures are available.
 

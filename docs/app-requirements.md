@@ -55,8 +55,10 @@ operational charger bookings.
 - The full local gate runs quality checks, direct component tests and the real
   application test. `--components-only` selects focused rules/tool/SDK checks;
   it is not an agent simulation or proof of model behavior.
-- The required workflow runs independent component and real-agent jobs for PRs
-  and main. Real app tests require Ollama; neither job requires Azure secrets.
+- The workflow runs independent component and real-agent jobs when a PR opens,
+  reopens or receives a commit, and on manual dispatch. It does not run again
+  just because a PR was merged. Real app tests require Ollama; neither job
+  requires Azure secrets.
 - Actual-model assertions cover grounded counts, the expected charging decision,
   saved output, SDK read/query/update/delete and a changed-data response.
 - Preserve raw model inputs/outputs, identity, timings, visible progress, JUnit

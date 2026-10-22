@@ -31,6 +31,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["app", "scripts"]
 
+[tool.hatch.build.targets.sdist]
+exclude = ["/.env", "/.env.*", "!/.env.example"]
+
 [tool.uv]
 constraint-dependencies = ["msgspec==0.21.1"]
 environments = ["sys_platform == 'win32'", "sys_platform == 'linux'"]
