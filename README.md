@@ -12,6 +12,38 @@ The dispatch feed adds changing operational data: publish a pickup-bay update,
 then ask the agent where drivers should collect their paperwork. Its answer must
 cite the exact bay and update reference stored in Cosmos DB.
 
+## Open a ready-to-use development environment
+
+[![Open in Dev Containers](.devcontainer/open-dev-container.svg)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
+
+Install [VS Code](https://code.visualstudio.com/) and its
+[Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers),
+and start Docker with Linux containers on an x86-64 Windows or Linux host. The
+button opens VS Code and clones the repository into a Docker volume. For an
+existing checkout, use **Dev Containers: Reopen in Container** instead.
+
+The [configuration](.devcontainer/devcontainer.json) installs Python 3.12,
+uv 0.13.0, Ollama 0.40.6, GitHub CLI, curl and jq. Setup installs the locked dependencies and
+copies `.env.example` only when `.env` is absent. A separate Linux `.venv` volume
+does not overwrite a host Windows environment. Initial setup downloads the
+development image and tools; model weights are downloaded only by the explicit
+commands below.
+
+This trusted local development environment uses **privileged Docker-in-Docker**,
+not the host Docker socket. The emulator runs inside that dedicated daemon, so
+its loopback endpoints are reachable by the app without exposing the database
+to your network. Docker images and model downloads persist in development
+volumes; rebuilding the editor container does not remove them.
+
+In a container terminal, start `ollama serve` and leave it running. In another,
+run `ollama pull phi3.5:latest` and
+`ollama create fleetcharge-phi3.5 -f scripts/Ollama.modelfile`, then continue
+with the same demo and CI commands. Setup already ran `uv sync` and prepared `.env`.
+VS Code forwards the API's port 8001; use the address in its **Ports** panel if
+that host port is occupied. The emulator and model ports are not
+automatically forwarded. This is a local Dev Containers path, not a validated
+GitHub Codespaces configuration.
+
 ## Prerequisites
 
 - Python 3.12, uv and Git.

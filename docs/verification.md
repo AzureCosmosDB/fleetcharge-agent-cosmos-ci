@@ -2,6 +2,8 @@
 
 Run these commands from the source checkout with Docker and the documented
 Ollama model running. See the [README](../README.md) for installation and requests.
+The local Dev Container runs these same commands. Its dedicated Docker daemon
+keeps the emulator's loopback endpoints in the Python process's environment.
 
 ## Local checks
 

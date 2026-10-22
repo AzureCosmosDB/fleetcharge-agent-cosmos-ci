@@ -7,6 +7,10 @@ Actions using the Cosmos DB vNext emulator, before deploying to Azure.
 The code and instructions must work for contributors cloning the sample;
 do not embed personal accounts, machine paths or unpublished article notes.
 
+Provide a local VS Code Dev Containers launch badge and configuration alongside
+the manual setup. Both paths use the same application, scripts and CI checks;
+see [development container requirements](../specs/007-devcontainer/spec.md).
+
 ## Application
 
 Use Python 3.12, FastAPI, Microsoft Agent Framework, the async Cosmos SDK and

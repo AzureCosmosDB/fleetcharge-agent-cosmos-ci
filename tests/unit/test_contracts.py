@@ -1,3 +1,4 @@
+import json
 import shutil
 import subprocess
 import tarfile
@@ -8,6 +9,24 @@ import pytest
 
 from app import settings as settings_module
 from app.settings import Settings
+
+
+def test_devcontainer_matches_ci_tools_and_keeps_its_own_docker_daemon():
+    root = Path(__file__).resolve().parents[2]
+    configuration = json.loads((root / ".devcontainer" / "devcontainer.json").read_text())
+    dockerfile = (root / ".devcontainer" / "Dockerfile").read_text()
+    workflow = (root / ".github" / "workflows" / "emulator-ci.yml").read_text()
+    for release in (
+        "uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "v0.40.6/ollama-linux-amd64.tar.zst",
+    ):
+        assert release in dockerfile and release in workflow
+    assert "python:1-3.12-bookworm" in dockerfile
+    assert "ghcr.io/devcontainers/features/docker-in-docker:4" in configuration["features"]
+    assert "ghcr.io/devcontainers/features/github-cli:1" in configuration["features"]
+    assert "docker.sock" not in json.dumps(configuration)
+    assert configuration["otherPortsAttributes"]["onAutoForward"] == "ignore"
+    assert configuration["postCreateCommand"] == "bash .devcontainer/setup.sh"
 
 
 def test_distributions_exclude_local_environment_files(tmp_path):

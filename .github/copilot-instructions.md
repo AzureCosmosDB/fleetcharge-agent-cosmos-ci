@@ -14,6 +14,8 @@ enough to explain alongside the CI workflow.
   scripted-model strategy. The application uses real Ollama inference only.
   [Feature 006](../specs/006-dispatch-feed/spec.md) adds the dispatch feed and
   exact-source briefing requirements.
+  [Feature 007](../specs/007-devcontainer/spec.md) defines local Dev Containers
+  onboarding and the launch badge; keep its README and external-blog paths aligned.
 - Production deployment, cloud identity, RU benchmarking and a custom frontend
   are separate work. Do not imply emulator CI proves production readiness.
 
