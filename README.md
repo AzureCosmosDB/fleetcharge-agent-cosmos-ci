@@ -1,5 +1,14 @@
 # Test a Cosmos DB-backed agent in GitHub Actions
 
+[![CI](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml/badge.svg?branch=main)](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3120/)
+[![Microsoft Agent Framework](https://img.shields.io/badge/Microsoft-Agent_Framework-0078D4)](https://github.com/microsoft/agent-framework)
+[![Azure Cosmos DB Emulator](https://img.shields.io/badge/Azure-Cosmos_DB_Emulator-0078D4)](https://learn.microsoft.com/azure/cosmos-db/emulator-linux)
+[![Ollama](https://img.shields.io/badge/Ollama-Phi--3.5-000000?logo=ollama&logoColor=white)](https://ollama.com/library/phi3.5)
+
+[![Open in Dev Containers](.devcontainer/open-dev-container.svg)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
+[![VS Code](https://img.shields.io/badge/VS_Code-007ACC)](https://code.visualstudio.com/)
+
 FleetCharge is a small Python sample for testing an agent before deployment.
 Microsoft Agent Framework runs the agent, Ollama serves Microsoft Phi-3.5 locally,
 and the Azure Cosmos DB vNext emulator stores the application data.
@@ -13,8 +22,6 @@ then ask the agent where drivers should collect their paperwork. Its answer must
 cite the exact bay and update reference stored in Cosmos DB.
 
 ## Open a ready-to-use development environment
-
-[![Open in Dev Containers](.devcontainer/open-dev-container.svg)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
 
 Install [VS Code](https://code.visualstudio.com/) and its
 [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers),
