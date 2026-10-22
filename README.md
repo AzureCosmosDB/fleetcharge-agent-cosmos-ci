@@ -405,3 +405,8 @@ See [requirements](docs/app-requirements.md), [Spec Kit guidance](docs/speckit-w
 [real-model requirements](specs/005-real-model-app-tests/spec.md),
 [dispatch feed requirements](specs/006-dispatch-feed/spec.md) and
 [verification guide](docs/verification.md).
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+Third-party dependencies and model weights retain their own licenses.
