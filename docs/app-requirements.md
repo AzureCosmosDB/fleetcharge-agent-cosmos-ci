@@ -50,6 +50,31 @@ Containers `depots`, `routes`, `vehicles`, `chargers`, `recommendations`, `dispa
 `/depotId`; `telemetry` uses `/vehicleId`. Point reads include the partition key.
 Queries are parameterized and depot scoped. Validate ownership and source data.
 
+The optional `scripts.agent_isolation` component proof must run two owned emulator
+containers with distinct dynamic loopback ports and separate diagnostic paths.
+Seed the same database/document/partition identities in both, concurrently write
+different dispatch updates, and independently verify that each environment sees
+only its expected update while the other depot stays unchanged. Remove one
+container and verify the survivor still serves its update, then verify both owned
+containers are removed. SDK work and coordination must remain bounded. Do not
+mutate `.env` or process-global settings, invoke models, contact Azure, or present
+this proof as a coding-agent orchestrator, database clone/merge, or deployment.
+
+The additive `scripts.agent_ci --task dispatch|fleet-rules` command must run each
+task's existing component tests in an owned emulator with dynamic loopback ports.
+Pass explicit owned connection settings to the test subprocess, use the existing
+versioned seed fixtures and per-test database cleanup, and keep the parent
+environment and `.env` unchanged. Bound the subprocess, preserve distinct JUnit
+and emulator diagnostics per invocation, and write a successful result only
+after passing checks and verified container removal. Test and cleanup errors
+must exit nonzero rather than produce a successful report.
+
+The separate `agentic-ci.yml` workflow must run both task presets in a parallel
+matrix and the two-container isolation proof in its own job. Retain diagnostics
+on failure and do not cancel one task merely because another fails. Preserve the
+original emulator component and real-model workflow unchanged. These additional
+jobs validate submitted code, not AI coding-agent execution, migration or CD.
+
 Fixtures use a fixed review time and known records. The seeded depot has three
 vehicles. The grounded-answer test asks for the count, inserts a fourth vehicle
 at 50% battery through the SDK, and asks the same question again. Assert three

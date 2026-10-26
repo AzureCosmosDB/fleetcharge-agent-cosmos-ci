@@ -68,6 +68,8 @@ class Docker:
             return subprocess.CompletedProcess(command, 0, json.dumps([info]), "")
         if action == "logs":
             return subprocess.CompletedProcess(command, 0, "emulator diagnostic\n", "")
+        if action == "rm":
+            self.created = False
         return subprocess.CompletedProcess(command, 0, "", "")
 
 
@@ -106,6 +108,19 @@ def test_dynamic_loopback_ports_and_exact_cleanup(docker: Docker, tmp_path: Path
     before = len(docker.calls)
     instance.close()
     assert len(docker.calls) == before
+
+
+def test_removal_verification_requires_completed_cleanup(docker: Docker, tmp_path: Path) -> None:
+    instance = emulator(tmp_path)
+    with pytest.raises(EmulatorError, match="cleanup has not completed"):
+        instance.verify_removed()
+    with instance:
+        with pytest.raises(EmulatorError, match="cleanup has not completed"):
+            instance.verify_removed()
+    instance.verify_removed()
+    docker.created = True
+    with pytest.raises(EmulatorError, match="still exists"):
+        instance.verify_removed()
 
 
 def test_readiness_timeout_captures_logs_and_cleans(

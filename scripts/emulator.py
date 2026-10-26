@@ -221,6 +221,13 @@ class Emulator:
         self._closed = True
         print(f"[emulator] Cleanup complete; diagnostics: {self.log_path}", flush=True)
 
+    def verify_removed(self) -> None:
+        """Fail unless cleanup completed and the owned container no longer exists."""
+        if not self._closed:
+            raise EmulatorError("Emulator cleanup has not completed")
+        if self._inspect_owned() is not None:
+            raise EmulatorError("Owned emulator container still exists after cleanup")
+
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
