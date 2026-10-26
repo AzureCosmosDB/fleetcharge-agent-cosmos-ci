@@ -507,6 +507,34 @@ relevant checks before merging the integrated revision. No workflow launches
 coding agents, merges pull requests, runs live-account migrations or deploys
 the application.
 
+### Check the parallel workflow end to end
+
+```powershell
+uv run --locked --extra test python -m scripts.agent_swarm
+```
+
+This runs three tasks at once, each in its own Git worktree with its own
+emulator. After each agent step it reads the task's own endpoint back and fails
+if the stored dispatch update is not that agent's, then runs the task's tests.
+It then runs the same two agents against one shared emulator and requires a
+lost update, so a pass shows that isolation changed the outcome. Finally it
+merges the three branches into an integration worktree, runs the combined tests
+against a fresh emulator and verifies every owned container is removed.
+
+The default agent step is a deterministic stand-in that makes one small file
+change and one database write, so the check needs no model. To run a real coding
+agent instead, pass a command that `{prompt}` and `{agent}` are substituted into;
+it runs in each worktree with that task's `COSMOS_*` settings:
+
+```powershell
+uv run --locked --extra test python -m scripts.agent_swarm --agent-command 'copilot -p "{prompt}" --allow-all-tools'
+```
+
+A real agent must follow the prompt's contract (record its dispatch update and
+commit). In GitHub Actions the stand-in version is the `Parallel worktree swarm
+check` job, which runs only when you start **Agent task CI** manually
+(`gh workflow run agentic-ci.yml --ref <branch>`); pull requests do not run it.
+
 ## Limits and development
 
 The emulator does not enforce authentication. Its public SDK test key is not a
