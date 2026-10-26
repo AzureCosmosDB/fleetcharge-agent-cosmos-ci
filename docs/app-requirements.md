@@ -40,6 +40,12 @@ and generated answer. See [dispatch requirements](../specs/006-dispatch-feed/spe
 
 ## Cosmos DB
 
+Direct local startup uses the emulator's standard ports on loopback: `8081`
+for the database endpoint and `8080` for readiness. The application defaults,
+environment template and README must agree. Preserve explicit local settings
+and process-environment overrides; managed demo and CI runs still allocate
+their own dynamic ports.
+
 Containers `depots`, `routes`, `vehicles`, `chargers`, `recommendations`, `dispatchUpdates` use
 `/depotId`; `telemetry` uses `/vehicleId`. Point reads include the partition key.
 Queries are parameterized and depot scoped. Validate ownership and source data.

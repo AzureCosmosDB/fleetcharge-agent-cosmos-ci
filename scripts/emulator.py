@@ -26,7 +26,7 @@ class Emulator:
     """Own one isolated container; expose HTTP ``endpoint`` and ``ready_url``.
 
     Use ``with Emulator() as emulator: ...``. Ports are dynamically allocated on
-    loopback by default. Explicit ports (for example 18081/18080) are optional;
+    loopback by default. Explicit ports (for example 8081/8080) are optional;
     occupied ports fail rather than reusing or removing an existing container.
     """
 

@@ -17,7 +17,7 @@ EMULATOR_KEY = (
 
 @dataclass(frozen=True)
 class Settings:
-    endpoint: str = "http://127.0.0.1:18081"
+    endpoint: str = "http://127.0.0.1:8081"
     database: str = "fleetchargetest-demo"
     key: str = EMULATOR_KEY
     mode: str = "ollama"

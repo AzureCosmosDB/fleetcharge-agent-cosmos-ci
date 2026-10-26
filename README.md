@@ -84,10 +84,11 @@ download weights automatically or silently select another model.
 
 ## Configure the emulator connection
 
-The local `.env` and committed `.env.example` contain the Cosmos SDK settings:
+The committed `.env.example` and application defaults use the emulator's
+standard database port. A fresh copy to `.env` contains:
 
 ```dotenv
-COSMOS_ENDPOINT=http://127.0.0.1:18081
+COSMOS_ENDPOINT=http://127.0.0.1:8081
 COSMOS_DATABASE=fleetchargetest-demo
 COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
 ```
@@ -109,20 +110,26 @@ There are two ways to use these settings:
   explicitly. Seed it, then run Uvicorn directly. This mode keeps data until you
   remove the database or stop a disposable container.
 
+An existing `.env` is not migrated automatically. Update only its
+`COSMOS_ENDPOINT` if you want to keep using the standard port, or use the
+session override below. Keep any intentional custom port mapping consistent
+across the emulator, application and shell.
+
 For direct startup, run this in a dedicated PowerShell terminal:
 
 ```powershell
 $image = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-latest"
 docker run --rm --name fleetcharge-local `
-    -p 127.0.0.1:18081:8081 -p 127.0.0.1:18080:8080 `
+    -p 127.0.0.1:8081:8081 -p 127.0.0.1:8080:8080 `
     $image --protocol http
 ```
 
-In another terminal, wait until `http://127.0.0.1:18080/ready` returns HTTP 200,
+In another terminal, wait until `http://127.0.0.1:8080/ready` returns HTTP 200,
 then run from the source checkout:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:18080/ready
+Invoke-RestMethod http://127.0.0.1:8080/ready
+$env:COSMOS_ENDPOINT = "http://127.0.0.1:8081"
 uv run --locked python -m scripts.seed_cosmos
 uv run --locked uvicorn app.api:app --host 127.0.0.1 --port 8001
 ```
@@ -133,12 +140,43 @@ Stop Uvicorn with Ctrl+C; use `uv run --locked python -m scripts.cleanup_cosmos`
 to delete only the configured `fleetchargetest-` database while the emulator is
 still running. Stop your `docker run` terminal with Ctrl+C when finished.
 
-The container's SDK port is 8081; 18081 is the host mapping. Its readiness port
-is 8080, mapped to 18080. HTTP mode is supported for this Python sample by the
+The container's standard SDK port `8081` and readiness port `8080` are published
+unchanged on host loopback. HTTP mode is supported for this Python sample by the
 [vNext quickstart](https://learn.microsoft.com/azure/cosmos-db/emulator-linux#running).
 It does not disable TLS verification; HTTPS requires the documented certificate
 setup. Both the app and container are loopback-only. Settings reject cloud
 Cosmos endpoints and non-test database names to prevent accidental production use.
+
+### Optional inspection with Azure Cosmos DB Shell
+
+Shell is not required to run the application or CI. To inspect the directly
+started emulator, follow the
+[installation guide](https://learn.microsoft.com/azure/cosmos-db/shell/install).
+The .NET global-tool option requires the .NET SDK 10.0 or later:
+
+```powershell
+dotnet tool install --global CosmosDBShell --prerelease
+cosmosdbshell --version
+cosmosdbshell
+```
+
+If already installed, skip the install command. Inside Cosmos DB Shell, use
+these commands (verified with `1.1.280-preview`):
+
+```text
+connect http://127.0.0.1:8081/
+connect
+ls
+cd fleetchargetest-demo
+cd dispatchUpdates
+print current-dispatch SEA-01
+print current-dispatch PDX-02
+```
+
+Bare `connect` displays the connection information. `print` reads an item by
+ID and partition key. A fresh seed returns `BAY-2` for Seattle and `BAY-99` for
+Portland. The shell recognizes the local emulator and selects its well-known
+key and Gateway mode. Use your actual endpoint if you changed the port mapping.
 
 ## Run the same complete gate locally
 

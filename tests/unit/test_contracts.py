@@ -157,16 +157,31 @@ def test_documented_emulator_profile_matches_defaults(monkeypatch):
         settings_module, "ENV_FILE", settings_module.ENV_FILE.with_name(".env.example")
     )
     config = Settings.from_env()
-    assert config.endpoint == Settings().endpoint == "http://127.0.0.1:18081"
+    assert config.endpoint == Settings().endpoint == "http://127.0.0.1:8081"
     assert config.database == Settings().database == "fleetchargetest-demo"
     assert config.key == Settings().key == settings_module.EMULATOR_KEY
     assert len(b64decode(config.key, validate=True)) == 64
 
 
+def test_missing_dotenv_uses_standard_emulator_endpoint(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings_module, "ENV_FILE", tmp_path / ".env")
+    monkeypatch.delenv("COSMOS_ENDPOINT", raising=False)
+    assert Settings.from_env().endpoint == "http://127.0.0.1:8081"
+
+
+def test_readme_direct_emulator_ports_match_defaults():
+    root = Path(__file__).resolve().parents[2]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    assert f"COSMOS_ENDPOINT={Settings().endpoint}" in readme
+    assert "-p 127.0.0.1:8081:8081 -p 127.0.0.1:8080:8080" in readme
+    assert "Invoke-RestMethod http://127.0.0.1:8080/ready" in readme
+    assert f"connect {Settings().endpoint}/" in readme
+
+
 def test_cosmos_dotenv_settings_allow_explicit_process_overrides(tmp_path, monkeypatch):
     path = tmp_path / ".env"
     path.write_text(
-        f"COSMOS_ENDPOINT=http://127.0.0.1:18081\n"
+        f"COSMOS_ENDPOINT=http://127.0.0.1:49150\n"
         f"COSMOS_DATABASE=fleetchargetest-local\nCOSMOS_KEY={settings_module.EMULATOR_KEY}\n"
     )
     monkeypatch.setattr(settings_module, "ENV_FILE", path)
@@ -175,7 +190,7 @@ def test_cosmos_dotenv_settings_allow_explicit_process_overrides(tmp_path, monke
     config = Settings.from_env()
     assert config.key == settings_module.EMULATOR_KEY
     assert config.database == "fleetchargetest-local"
-    assert config.endpoint == "http://127.0.0.1:18081"
+    assert config.endpoint == "http://127.0.0.1:49150"
     monkeypatch.setenv("COSMOS_ENDPOINT", "http://127.0.0.1:49151")
     monkeypatch.setenv("COSMOS_DATABASE", "fleetchargetest-process")
     monkeypatch.setenv("COSMOS_KEY", "Y3VzdG9tLWVtdWxhdG9yLWtleQ==")
