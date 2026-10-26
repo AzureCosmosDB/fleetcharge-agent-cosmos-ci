@@ -428,6 +428,85 @@ Source distributions retain `.env.example` but exclude local `.env` files and
 The component CI job also builds both distributions. Run the demo from the source
 checkout so its seed fixtures are available.
 
+## Parallel coding-agent database isolation
+
+Run the first component proof for parallel AI coding-agent environments:
+
+```powershell
+uv run --locked --extra test python -m scripts.agent_isolation
+```
+
+Run from the source checkout with Docker in Linux-container mode. This command
+does not need Ollama, Azure credentials, or a separate running emulator. It
+explicitly configures its owned endpoints and the public emulator key without
+reading or modifying your `.env` or process environment.
+
+The proof starts two invocation-owned emulator containers on four dynamically
+allocated loopback ports. Startup is sequential; once both are ready, fixture
+seeding and the conflicting writes run concurrently. Both use the **same**
+database name, document ID `current-dispatch`, and partition key `SEA-01`.
+Agent A writes `BAY-7`; agent B writes `BAY-8`. Independent SDK reads must find
+each environment's own update and the unchanged `PDX-02` fixture. The command
+then removes A, verifies its container is gone, and reads B again before removing
+and verifying B. Any mismatch or lifecycle failure exits nonzero.
+
+Each invocation writes separate agent logs and, only after successful read-back
+and cleanup, `result.json` under a unique `.artifacts/agent-isolation/<run-id>`
+directory. It records endpoints, container IDs and observed startup/total times.
+SDK phases and readiness have deadlines. The existing ownership guard handles
+cleanup on ordinary exceptions; forcibly terminating the process or Docker can
+still leave resources requiring inspection and exact-ID cleanup.
+
+This is a **component isolation proof**, not an AI coding-agent orchestrator,
+model test, security sandbox, database snapshot/clone, or native database
+branching feature. It uses the real emulator and SDK, not simulated agents or
+model responses. The labels A/B identify two development environments; they do
+not claim two coding agents executed. Two emulator containers require sufficient
+Docker memory and CPU; do not infer lightweight or instantaneous startup.
+No live Azure deployment, migration runner, automatic Git merge, or copying of
+disposable database state into a shared environment is implemented here.
+
+For an eventual worktree-based workflow, each coding agent should have its own
+checkout, configuration, test artifacts, and owned database environment. Merge
+reviewed code, versioned synthetic fixtures and migration/policy scripts through
+Git, then rerun checks on the integrated revision. Do not merge emulator data.
+
+### Run task-specific checks in GitHub Actions
+
+The separate [Agent task CI workflow](.github/workflows/agentic-ci.yml) adds
+parallel `dispatch` and `fleet-rules` component jobs on pull requests and manual
+dispatch. Each matrix job gets its own GitHub-hosted runner and starts one owned
+emulator. The existing test fixtures seed versioned data into isolated test
+databases. A third job runs the two-container collision and cleanup proof above.
+
+Run the same task checks locally:
+
+```powershell
+uv run --locked --extra test python -m scripts.agent_ci --task dispatch
+uv run --locked --extra test python -m scripts.agent_ci --task fleet-rules
+```
+
+`dispatch` runs the dispatch unit and feed integration tests. `fleet-rules` runs
+the fleet-rule unit and delivery-wave tool integration tests. These are bounded,
+direct component checks, not coding-agent execution or application inference.
+The task runner passes the owned endpoint, readiness URL and public emulator key
+to its test subprocess without changing the parent environment or `.env`.
+Each test database is seeded and cleaned by the existing fixtures.
+
+Results, JUnit and emulator logs have unique
+`.artifacts/agent-ci/<task>/<run-id>` paths. A success JSON report is written only
+after the tests pass and owned-container removal is verified. Failures exit
+nonzero; the workflow uploads diagnostics even when a test fails.
+The matrix uses `fail-fast: false` so one task's failure does not cancel the
+other task's diagnostics.
+
+Both jobs in the original [Cosmos emulator CI workflow](.github/workflows/emulator-ci.yml)
+remain unchanged. Task-specific checks are additional feedback, not replacements
+for the full component gate or the real Ollama application job. Require all
+relevant checks before merging the integrated revision. No workflow launches
+coding agents, merges pull requests, runs live-account migrations or deploys
+the application.
+
 ## Limits and development
 
 The emulator does not enforce authentication. Its public SDK test key is not a
