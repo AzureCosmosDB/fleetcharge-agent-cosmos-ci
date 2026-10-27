@@ -98,7 +98,7 @@ jobs:
         run: |
           echo "Copilot requests are billed to the organization. The org policy must allow this."
           uv run --locked --extra test python -m scripts.agent_swarm \
-            --agent-command 'copilot -p "{prompt}" -s --allow-all-tools --no-ask-user --disable-builtin-mcps --no-custom-instructions --secret-env-vars=GITHUB_TOKEN --max-ai-credits 10'
+            --agent-command 'copilot -p "{prompt}" -s --allow-all-tools --no-ask-user --disable-builtin-mcps --no-custom-instructions --secret-env-vars=GITHUB_TOKEN --max-ai-credits 30'
       - name: Preserve real-agent patches, test results and diagnostics
         if: always()
         uses: actions/upload-artifact@v7
