@@ -524,14 +524,25 @@ against a fresh emulator and verifies every owned container is removed.
 The default agent step is a deterministic stand-in that makes one small file
 change and one database write, so the check needs no model. To run a real coding
 agent instead, pass a command that `{prompt}` and `{agent}` are substituted into;
-it runs in each worktree with that task's `COSMOS_*` settings:
+it runs in each worktree with that task's `COSMOS_*` settings and a
+`SWARM_PYTHON` interpreter that has the SDK and test tools:
 
 ```powershell
-uv run --locked --extra test python -m scripts.agent_swarm --agent-command 'copilot -p "{prompt}" --allow-all-tools'
+uv run --locked --extra test python -m scripts.agent_swarm --agent-command 'copilot -p "{prompt}" -s --allow-all-tools --no-ask-user --disable-builtin-mcps'
 ```
 
 A real agent must follow the prompt's contract (record its dispatch update and
-commit). In GitHub Actions the stand-in version is the `Parallel worktree swarm
+commit). Real agents that edit the same file produce genuine merge conflicts.
+The check lists the conflicting files in `result.json`. With `--agent-command`,
+the same command is then asked to resolve each conflict in the integration
+worktree; the result counts only if the merge is complete, no conflict markers
+remain, and the combined tests pass. With the stand-in, any conflict is reported
+as `unresolved-conflict`. The command exits nonzero unless `status` is `passed`.
+Each task's `change.patch`, the resolver's log and `integration.patch` are kept
+under `.artifacts/agent-swarm/<run-id>/`. Agents run with all tools allowed, so
+use a trusted development machine, not a shared one.
+
+In GitHub Actions the stand-in version is the `Parallel worktree swarm
 check` job, which runs only when you start **Agent task CI** manually
 (`gh workflow run agentic-ci.yml --ref <branch>`); pull requests do not run it.
 

@@ -15,6 +15,7 @@ from uuid import uuid4
 
 IMAGE = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-latest"
 OWNER_LABEL = "io.fleetcharge.emulator-owner"
+REMOVE_TIMEOUT_SECONDS = 120
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -207,7 +208,8 @@ class Emulator:
             try:
                 # Recheck immediately before removal; never remove by name or image.
                 if self._inspect_owned() is not None:
-                    self._docker("rm", "--force", info["Id"])
+                    # Docker can be slow to remove a container when other tasks are loading it.
+                    self._docker("rm", "--force", info["Id"], timeout=REMOVE_TIMEOUT_SECONDS)
             except Exception as error:
                 errors.append(error)
         try:

@@ -110,6 +110,23 @@ def test_dynamic_loopback_ports_and_exact_cleanup(docker: Docker, tmp_path: Path
     assert len(docker.calls) == before
 
 
+def test_remove_waits_longer_than_ordinary_docker_calls(
+    docker: Docker, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    timeouts: dict[str, float] = {}
+
+    def record(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        timeouts[command[1]] = kwargs["timeout"]
+        return docker.run(command, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", record)
+    with emulator(tmp_path):
+        pass
+
+    assert timeouts["rm"] == 120
+    assert timeouts["logs"] == 30
+
+
 def test_removal_verification_requires_completed_cleanup(docker: Docker, tmp_path: Path) -> None:
     instance = emulator(tmp_path)
     with pytest.raises(EmulatorError, match="cleanup has not completed"):

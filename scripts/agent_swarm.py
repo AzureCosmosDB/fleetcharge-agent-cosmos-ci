@@ -37,10 +37,22 @@ STANDIN_FLAG = "--standin-agent"
 PROMPT = (
     "You are coding task {agent}. Work only inside this Git worktree. Make one small, "
     "reviewable change for the {task} area and add a note describing it under "
-    "docs/agent-notes/{agent}.md. Using the COSMOS_ENDPOINT, COSMOS_KEY, and COSMOS_DATABASE "
-    "environment variables, record your work by setting item 'current-dispatch' (partition key "
+    "docs/agent-notes/{agent}.md. Run Python only with the interpreter named by the "
+    "SWARM_PYTHON environment variable; it has the Azure Cosmos DB SDK and test tools "
+    "installed. Using the COSMOS_ENDPOINT, COSMOS_KEY, and COSMOS_DATABASE environment "
+    "variables, record your work by setting item 'current-dispatch' (partition key "
     "'SEA-01') in container 'dispatchUpdates' to pickupBay '{bay}' and updateId "
-    "'{agent}-dispatch'. Do not read or write any other endpoint. Commit your change."
+    "'{agent}-dispatch'. Do not read or write any other endpoint, and do not start or "
+    "stop containers. Commit your change."
+)
+
+RESOLVE_PROMPT = (
+    "Merging {agent}'s branch into the integration branch stopped with conflicts in: {files}. "
+    "Keep the intent of both sides and preserve every test and note either side added. "
+    "Resolve the conflict markers, run the affected tests with the interpreter named by the "
+    "SWARM_PYTHON environment variable (python -m pytest; the COSMOS_* variables are already "
+    "set), then git add the files and finish the merge with git commit --no-edit. Do not "
+    "abort the merge, reset, or change any other branch."
 )
 
 
@@ -70,13 +82,14 @@ DEFAULT_TASKS = (
 )
 
 
-def build_agent_command(template: str | None, task: Task) -> list[str]:
+def build_agent_command(template: str | None, task: Task, prompt: str | None = None) -> list[str]:
     if template is None:
         return [sys.executable, str(Path(__file__).resolve()), STANDIN_FLAG]
     words = shlex.split(template, posix=os.name != "nt")
     if os.name == "nt":
         words = [w[1:-1] if len(w) > 1 and w[0] == w[-1] and w[0] in "\"'" else w for w in words]
-    return [word.replace("{prompt}", task.prompt).replace("{agent}", task.agent) for word in words]
+    text = prompt or task.prompt
+    return [word.replace("{prompt}", text).replace("{agent}", task.agent) for word in words]
 
 
 def agent_environment(task: Task, emulator: Emulator, standin: bool = False) -> dict[str, str]:
@@ -92,30 +105,68 @@ def agent_environment(task: Task, emulator: Emulator, standin: bool = False) -> 
         SWARM_AGENT=task.agent,
         SWARM_BAY=task.bay,
         SWARM_PROMPT=task.prompt,
+        SWARM_PYTHON=sys.executable,
         AGENT_MODEL_MODE="ollama",
         FLEETCHARGE_TIMEOUT_SECONDS="60",
     )
     return environment
 
 
+def git_command(*arguments: str) -> list[str]:
+    return [
+        "git",
+        "-c",
+        "user.name=swarm-check",
+        "-c",
+        "user.email=swarm@example.invalid",
+        *arguments,
+    ]
+
+
 def git(*arguments: str, cwd: Path = ROOT) -> str:
     result = subprocess.run(
-        [
-            "git",
-            "-c",
-            "user.name=swarm-check",
-            "-c",
-            "user.email=swarm@example.invalid",
-            *arguments,
-        ],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
+        git_command(*arguments), cwd=cwd, capture_output=True, text=True, check=False
     )
     if result.returncode:
         raise SwarmError(f"git {' '.join(arguments)} failed: {result.stderr.strip()}")
     return result.stdout.strip()
+
+
+def merge_branch(worktree: Path, agent: str, commit: str) -> list[str]:
+    """Merge one task commit; return conflicted paths, leaving the merge open if any."""
+    result = subprocess.run(
+        git_command("merge", "--no-ff", "-m", f"merge {agent}", commit),
+        cwd=worktree,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if not result.returncode:
+        return []
+    files = git("diff", "--name-only", "--diff-filter=U", cwd=worktree).splitlines()
+    if not files:
+        raise SwarmError(f"git merge failed: {(result.stderr or result.stdout).strip()}")
+    return files
+
+
+def merge_in_progress(worktree: Path) -> bool:
+    result = subprocess.run(
+        git_command("rev-parse", "-q", "--verify", "MERGE_HEAD"),
+        cwd=worktree,
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def has_conflict_markers(worktree: Path, files: list[str]) -> bool:
+    result = subprocess.run(
+        git_command("grep", "-l", "-E", "^(<{7}|>{7})( |$)", "--", *files),
+        cwd=worktree,
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
 
 
 def run_logged(
@@ -196,6 +247,9 @@ def run_task(
             timeout=900,
         )
         commit = commit_worktree(worktree, task)
+        (folder / "change.patch").write_text(
+            git("show", "--format=", "--patch", commit, cwd=worktree) + "\n", encoding="utf-8"
+        )
         verify_state(task, emulator.endpoint)
         environment["COSMOS_DATABASE"] = f"fleetchargetest-swarm-{task.agent}"
         run_logged(
@@ -262,43 +316,110 @@ def shared_emulator_control(
     }
 
 
+def resolve_conflict(
+    worktree: Path,
+    agent: str,
+    files: list[str],
+    environment: dict[str, str],
+    agent_command: str,
+    artifacts: Path,
+) -> dict[str, Any]:
+    """Ask the configured agent to finish an open merge; accept only a clean, marker-free result."""
+    conflict: dict[str, Any] = {"agent": agent, "files": files, "resolved": False}
+    prompt = RESOLVE_PROMPT.format(agent=agent, files=", ".join(files))
+    environment = {**environment, "SWARM_AGENT": "integrator", "SWARM_PROMPT": prompt}
+    try:
+        run_logged(
+            build_agent_command(agent_command, Task("integrator", "integration", ""), prompt),
+            cwd=worktree,
+            env=environment,
+            log=artifacts / f"resolve-{agent}.log",
+            timeout=900,
+        )
+    except SwarmError as error:
+        conflict["resolver_error"] = str(error)
+    if merge_in_progress(worktree) or git("status", "--porcelain", cwd=worktree):
+        return conflict
+    if has_conflict_markers(worktree, files):
+        git("reset", "--hard", "HEAD^1", cwd=worktree)
+        conflict["resolver_error"] = "Conflict markers were committed; merge reverted"
+        return conflict
+    conflict["resolved"] = True
+    return conflict
+
+
 def integrate(
-    tasks: tuple[Task, ...], results: list[dict[str, Any]], run: str, artifacts: Path
+    tasks: tuple[Task, ...],
+    results: list[dict[str, Any]],
+    run: str,
+    artifacts: Path,
+    agent_command: str | None,
 ) -> dict[str, Any]:
     worktree = artifacts / "integration"
     git("worktree", "add", "-b", f"swarm/{run}/integration", str(worktree), "HEAD")
-    for result in results:
-        try:
-            git(
-                "merge", "--no-ff", "-m", f"merge {result['agent']}", result["commit"], cwd=worktree
-            )
-        except SwarmError as error:
-            git("merge", "--abort", cwd=worktree)
-            raise SwarmError(f"Integration conflict merging {result['agent']}: {error}") from error
+    base = git("rev-parse", "HEAD", cwd=worktree)
     presets = sorted({task.preset for task in tasks})
     targets = [target for preset in presets for target in TASKS[preset]]
+    merged: list[str] = []
+    conflicts: list[dict[str, Any]] = []
+    tests_passed: bool | None = None
+    test_error: str | None = None
     with Emulator(log_path=artifacts / "integration-emulator.log") as emulator:
         environment = agent_environment(tasks[0], emulator)
         environment["COSMOS_DATABASE"] = "fleetchargetest-swarm-integration"
-        run_logged(
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                *targets,
-                f"--junitxml={artifacts / 'integration.xml'}",
-            ],
-            cwd=worktree,
-            env=environment,
-            log=artifacts / "integration-pytest.log",
-            timeout=900,
-        )
+        for result in results:
+            files = merge_branch(worktree, result["agent"], result["commit"])
+            if not files:
+                merged.append(result["agent"])
+                continue
+            print(f"[swarm] Merge conflict from {result['agent']}: {', '.join(files)}", flush=True)
+            if agent_command is None:
+                conflict: dict[str, Any] = {"agent": result["agent"], "files": files}
+                conflict["resolved"] = False
+            else:
+                conflict = resolve_conflict(
+                    worktree, result["agent"], files, environment, agent_command, artifacts
+                )
+            if conflict["resolved"]:
+                merged.append(result["agent"])
+            elif merge_in_progress(worktree):
+                git("merge", "--abort", cwd=worktree)
+            conflicts.append(conflict)
+        if all(conflict["resolved"] for conflict in conflicts):
+            (artifacts / "integration.patch").write_text(
+                git("diff", "--patch", base, "HEAD", cwd=worktree) + "\n", encoding="utf-8"
+            )
+            try:
+                run_logged(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        *targets,
+                        f"--junitxml={artifacts / 'integration.xml'}",
+                    ],
+                    cwd=worktree,
+                    env=environment,
+                    log=artifacts / "integration-pytest.log",
+                    timeout=900,
+                )
+                tests_passed = True
+            except SwarmError as error:
+                tests_passed = False
+                test_error = str(error)
     emulator.verify_removed()
     return {
-        "merged": [r["agent"] for r in results],
-        "conflicts": 0,
-        "integrated_tests_passed": True,
+        "merged": merged,
+        "conflicts": conflicts,
+        "integrated_tests_passed": tests_passed,
+        **({"test_error": test_error} if test_error else {}),
     }
+
+
+def swarm_status(integration: dict[str, Any]) -> str:
+    if any(not conflict["resolved"] for conflict in integration["conflicts"]):
+        return "unresolved-conflict"
+    return "passed" if integration["integrated_tests_passed"] else "integration-tests-failed"
 
 
 def run_swarm(
@@ -340,7 +461,7 @@ def run_swarm(
             "[swarm] Collision reproduced without isolation; merging and testing integration",
             flush=True,
         )
-        integration = integrate(tasks, results, run, artifacts)
+        integration = integrate(tasks, results, run, artifacts, agent_command)
     finally:
         for worktree in [*worktrees.values(), artifacts / "integration"]:
             if worktree.exists():
@@ -352,8 +473,10 @@ def run_swarm(
                 ["git", "branch", "-D", branch], cwd=ROOT, capture_output=True, check=False
             )
         shutil.rmtree(artifacts / "worktrees", ignore_errors=True)
+    status = swarm_status(integration)
     report: dict[str, Any] = {
         "kind": "agent-swarm-check",
+        "status": status,
         "agent_step": kind,
         "agents": results,
         "shared_emulator_control": control,
@@ -363,7 +486,10 @@ def run_swarm(
     }
     (artifacts / "result.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2), flush=True)
-    print(f"[swarm] Passed; evidence: {artifacts}", flush=True)
+    print(
+        f"[swarm] {'Passed' if status == 'passed' else 'FAILED: ' + status}; evidence: {artifacts}",
+        flush=True,
+    )
     return report
 
 
@@ -378,12 +504,12 @@ def main() -> int:
     )
     parser.add_argument("--agents", type=int, choices=(2, 3), default=3)
     args = parser.parse_args()
-    run_swarm(
+    report = run_swarm(
         ROOT / ".artifacts" / "agent-swarm" / uuid4().hex,
         DEFAULT_TASKS[: args.agents],
         args.agent_command,
     )
-    return 0
+    return 0 if report["status"] == "passed" else 1
 
 
 if __name__ == "__main__":
