@@ -565,10 +565,10 @@ An unavailable policy, budget or model entitlement fails the real job; it does n
 fall back to stand-ins.
 
 The real job is manual-only, default-branch-only, and limited to 60 minutes.
-Each Copilot session has a 10-AI-credit cap; conflict resolution can start up to
-two additional sessions (at most five sessions / 50 credits for this three-task
-run). Caps can stop a task before it finishes. The built-in MCP servers and
-custom instructions are disabled, checkout credentials are not persisted, and
+Each Copilot session has a 30-AI-credit cap, the CLI's minimum; conflict resolution
+can start up to two additional sessions (at most five sessions / 150 credits for
+this three-task run). Caps can stop a task before it finishes. The built-in MCP
+servers and custom instructions are disabled, checkout credentials are not persisted, and
 `--secret-env-vars=GITHUB_TOKEN` strips the authentication token from Copilot's
 shell/MCP tool environments. These controls are not a security sandbox:
 the agents still have broad access to their shared runner and Docker.
