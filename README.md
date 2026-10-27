@@ -1,13 +1,13 @@
 # Test a Cosmos DB-backed agent in GitHub Actions
 
-[![CI](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml/badge.svg?branch=main)](https://github.com/jaydestro/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml)
+[![CI](https://github.com/AzureCosmosDB/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml/badge.svg?branch=main)](https://github.com/AzureCosmosDB/fleetcharge-agent-cosmos-ci/actions/workflows/emulator-ci.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3120/)
 [![Microsoft Agent Framework](https://img.shields.io/badge/Microsoft-Agent_Framework-0078D4)](https://github.com/microsoft/agent-framework)
 [![Azure Cosmos DB Emulator](https://img.shields.io/badge/Azure-Cosmos_DB_Emulator-0078D4)](https://learn.microsoft.com/azure/cosmos-db/emulator-linux)
 [![Ollama](https://img.shields.io/badge/Ollama-Phi--3.5-000000?logo=ollama&logoColor=white)](https://ollama.com/library/phi3.5)
-[![Open in Dev Containers](https://img.shields.io/badge/Dev_Container-Open_in_VS_Code-007ACC?logo=docker&logoColor=white)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2Fjaydestro%2Ffleetcharge-agent-cosmos-ci)
+[![Open in Dev Containers](https://img.shields.io/badge/Dev_Container-Open_in_VS_Code-007ACC?logo=docker&logoColor=white)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https%3A%2F%2Fgithub.com%2FAzureCosmosDB%2Ffleetcharge-agent-cosmos-ci)
 [![VS Code](https://img.shields.io/badge/VS_Code-007ACC)](https://code.visualstudio.com/)
-[![Open in Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Browser-181717?logo=github&logoColor=white)](https://codespaces.new/jaydestro/fleetcharge-agent-cosmos-ci)
+[![Open in Codespaces](https://img.shields.io/badge/Codespaces-Open_in_Browser-181717?logo=github&logoColor=white)](https://codespaces.new/AzureCosmosDB/fleetcharge-agent-cosmos-ci)
 [![MIT License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 FleetCharge is a small Python sample for testing an agent before deployment.
