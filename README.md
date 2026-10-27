@@ -503,9 +503,9 @@ other task's diagnostics.
 Both jobs in the original [Cosmos emulator CI workflow](.github/workflows/emulator-ci.yml)
 remain unchanged. Task-specific checks are additional feedback, not replacements
 for the full component gate or the real Ollama application job. Require all
-relevant checks before merging the integrated revision. No workflow launches
-coding agents, merges pull requests, runs live-account migrations or deploys
-the application.
+relevant checks before merging the integrated revision. The optional manual
+Copilot swarm job below launches coding agents, but no workflow merges pull
+requests, runs live-account migrations or deploys the application.
 
 ### Check the parallel workflow end to end
 
@@ -516,8 +516,8 @@ uv run --locked --extra test python -m scripts.agent_swarm
 This runs three tasks at once, each in its own Git worktree with its own
 emulator. After each agent step it reads the task's own endpoint back and fails
 if the stored dispatch update is not that agent's, then runs the task's tests.
-It then runs the same two agents against one shared emulator and requires a
-lost update, so a pass shows that isolation changed the outcome. Finally it
+It then runs two deterministic stand-ins against one shared emulator and requires
+a lost update, including when the isolated tasks use real agents. Finally it
 merges the three branches into an integration worktree, runs the combined tests
 against a fresh emulator and verifies every owned container is removed.
 
@@ -540,11 +540,42 @@ remain, and the combined tests pass. With the stand-in, any conflict is reported
 as `unresolved-conflict`. The command exits nonzero unless `status` is `passed`.
 Each task's `change.patch`, the resolver's log and `integration.patch` are kept
 under `.artifacts/agent-swarm/<run-id>/`. Agents run with all tools allowed, so
-use a trusted development machine, not a shared one.
+use a trusted development machine, not a shared one. Agent/task/startup failures
+also fail the command; inspect the saved process/emulator logs alongside
+`result.json`. A failed run must not be interpreted as a passing integration.
 
 In GitHub Actions the stand-in version is the `Parallel worktree swarm
 check` job, which runs only when you start **Agent task CI** manually
 (`gh workflow run agentic-ci.yml --ref <branch>`); pull requests do not run it.
+
+To opt into **Real Copilot worktree swarm** on the default branch:
+
+```powershell
+gh workflow run agentic-ci.yml --repo AzureCosmosDB/fleetcharge-agent-cosmos-ci --ref main -f run_real_agents=true
+```
+
+This uses GitHub Copilot CLI 1.0.103 on a GitHub-hosted runner with the native
+`GITHUB_TOKEN` and job-scoped `contents: read` / `copilot-requests: write`
+permissions. No PAT or repository secret is required. An organization owner must
+enable **Allow use of Copilot CLI billed to the organization**; requests are billed
+to the organization, not the person dispatching the workflow. See
+[GitHub's setup instructions](https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli-in-actions)
+and [authentication and billing](https://docs.github.com/en/copilot/concepts/agent-capabilities/agent-powered-workflows-and-operations/copilot-cli-in-github-actions).
+An unavailable policy, budget or model entitlement fails the real job; it does not
+fall back to stand-ins.
+
+The real job is manual-only, default-branch-only, and limited to 60 minutes.
+Each Copilot session has a 10-AI-credit cap; conflict resolution can start up to
+two additional sessions (at most five sessions / 50 credits for this three-task
+run). Caps can stop a task before it finishes. The built-in MCP servers and
+custom instructions are disabled, checkout credentials are not persisted, and
+`--secret-env-vars=GITHUB_TOKEN` strips the authentication token from Copilot's
+shell/MCP tool environments. These controls are not a security sandbox:
+the agents still have broad access to their shared runner and Docker.
+Use trusted reviewed code only. The runner merges only disposable local
+branches and uploads patches/logs; it never pushes the generated changes.
+Ordinary pull requests do not invoke the coding agents or receive the Copilot
+permission.
 
 ## Limits and development
 

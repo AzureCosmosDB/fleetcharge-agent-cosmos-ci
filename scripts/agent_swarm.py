@@ -12,7 +12,6 @@ import asyncio
 import json
 import os
 import shlex
-import shutil
 import subprocess
 import sys
 import time
@@ -164,8 +163,11 @@ def has_conflict_markers(worktree: Path, files: list[str]) -> bool:
         git_command("grep", "-l", "-E", "^(<{7}|>{7})( |$)", "--", *files),
         cwd=worktree,
         capture_output=True,
+        text=True,
         check=False,
     )
+    if result.returncode not in (0, 1):
+        raise SwarmError(f"Cannot check conflict markers: {result.stderr.strip()}")
     return result.returncode == 0
 
 
@@ -235,6 +237,7 @@ def run_task(
 ) -> dict[str, Any]:
     folder = artifacts / task.agent
     folder.mkdir()
+    base = git("rev-parse", "HEAD", cwd=worktree)
     started = time.monotonic()
     with Emulator(log_path=folder / "emulator.log") as emulator:
         environment = agent_environment(task, emulator)
@@ -248,7 +251,7 @@ def run_task(
         )
         commit = commit_worktree(worktree, task)
         (folder / "change.patch").write_text(
-            git("show", "--format=", "--patch", commit, cwd=worktree) + "\n", encoding="utf-8"
+            git("diff", "--binary", base, commit, cwd=worktree) + "\n", encoding="utf-8"
         )
         verify_state(task, emulator.endpoint)
         environment["COSMOS_DATABASE"] = f"fleetchargetest-swarm-{task.agent}"
@@ -282,7 +285,7 @@ def run_task(
 def shared_emulator_control(
     tasks: tuple[Task, ...], worktrees: dict[str, Path], artifacts: Path
 ) -> dict[str, Any]:
-    """Run the same agents against one emulator and require a detectable lost update."""
+    """Run two deterministic stand-ins against one emulator and require a lost update."""
     with Emulator(log_path=artifacts / "shared-control.log") as emulator:
         asyncio.run(asyncio.wait_for(seed_environment(emulator.endpoint), 120))
 
@@ -326,6 +329,7 @@ def resolve_conflict(
 ) -> dict[str, Any]:
     """Ask the configured agent to finish an open merge; accept only a clean, marker-free result."""
     conflict: dict[str, Any] = {"agent": agent, "files": files, "resolved": False}
+    parents = [git("rev-parse", name, cwd=worktree) for name in ("HEAD", "MERGE_HEAD")]
     prompt = RESOLVE_PROMPT.format(agent=agent, files=", ".join(files))
     environment = {**environment, "SWARM_AGENT": "integrator", "SWARM_PROMPT": prompt}
     try:
@@ -341,8 +345,12 @@ def resolve_conflict(
     if merge_in_progress(worktree) or git("status", "--porcelain", cwd=worktree):
         return conflict
     if has_conflict_markers(worktree, files):
-        git("reset", "--hard", "HEAD^1", cwd=worktree)
-        conflict["resolver_error"] = "Conflict markers were committed; merge reverted"
+        conflict["resolver_error"] = "Conflict markers were committed; integration rejected"
+        return conflict
+    if any(git("merge-base", parent, "HEAD", cwd=worktree) != parent for parent in parents):
+        conflict["resolver_error"] = "The resolved merge did not retain both parent commits"
+        return conflict
+    if "resolver_error" in conflict:
         return conflict
     conflict["resolved"] = True
     return conflict
@@ -385,6 +393,8 @@ def integrate(
             elif merge_in_progress(worktree):
                 git("merge", "--abort", cwd=worktree)
             conflicts.append(conflict)
+            if not conflict["resolved"]:
+                break
         if all(conflict["resolved"] for conflict in conflicts):
             (artifacts / "integration.patch").write_text(
                 git("diff", "--patch", base, "HEAD", cwd=worktree) + "\n", encoding="utf-8"
@@ -431,6 +441,12 @@ def run_swarm(
     worktrees: dict[str, Path] = {}
     branches = [f"swarm/{run}/{task.agent}" for task in tasks] + [f"swarm/{run}/integration"]
     kind = "stand-in agents" if agent_command is None else "custom agent command"
+    report: dict[str, Any] = {
+        "kind": "agent-swarm-check",
+        "status": "execution-failed",
+        "agent_step": kind,
+        "agents": [],
+    }
     print(f"[swarm] {len(tasks)} worktrees, {len(tasks)} emulators, {kind}", flush=True)
     try:
         for task in tasks:
@@ -462,30 +478,36 @@ def run_swarm(
             flush=True,
         )
         integration = integrate(tasks, results, run, artifacts, agent_command)
+        report.update(
+            status=swarm_status(integration),
+            agents=results,
+            shared_emulator_control=control,
+            integration=integration,
+            owned_containers_removed=True,
+        )
     finally:
+        cleanup_errors = []
         for worktree in [*worktrees.values(), artifacts / "integration"]:
             if worktree.exists():
-                subprocess.run(
-                    ["git", "worktree", "remove", "--force", str(worktree)], cwd=ROOT, check=False
-                )
+                try:
+                    git("worktree", "remove", "--force", str(worktree))
+                except SwarmError as error:
+                    cleanup_errors.append(str(error))
         for branch in branches:
-            subprocess.run(
-                ["git", "branch", "-D", branch], cwd=ROOT, capture_output=True, check=False
-            )
-        shutil.rmtree(artifacts / "worktrees", ignore_errors=True)
-    status = swarm_status(integration)
-    report: dict[str, Any] = {
-        "kind": "agent-swarm-check",
-        "status": status,
-        "agent_step": kind,
-        "agents": results,
-        "shared_emulator_control": control,
-        "integration": integration,
-        "owned_containers_removed": True,
-        "total_seconds": round(time.monotonic() - started, 3),
-    }
-    (artifacts / "result.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(report, indent=2), flush=True)
+            if git("branch", "--list", branch):
+                try:
+                    git("branch", "-D", branch)
+                except SwarmError as error:
+                    cleanup_errors.append(str(error))
+        report["worktrees_and_branches_removed"] = not cleanup_errors
+        if cleanup_errors:
+            report.update(status="cleanup-failed", cleanup_errors=cleanup_errors)
+        report["total_seconds"] = round(time.monotonic() - started, 3)
+        (artifacts / "result.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+        print(json.dumps(report, indent=2), flush=True)
+    status = report["status"]
     print(
         f"[swarm] {'Passed' if status == 'passed' else 'FAILED: ' + status}; evidence: {artifacts}",
         flush=True,
