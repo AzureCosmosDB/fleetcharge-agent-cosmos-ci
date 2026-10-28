@@ -1,0 +1,146 @@
+# MOCK-UP ONLY: illustrates a deployment workflow; the deployment job is disabled.
+# Phi/Ollama and the Cosmos emulator are local/CI dependencies, NOT deployment
+# dependencies. A real deployment would use Azure Cosmos DB and a reader-selected
+# Foundry model, with the reader's own endpoints and identity configuration.
+# Cloud application changes, resource provisioning and model selection are outside
+# this mock-up. Running it only displays the notice; it cannot sign in or deploy.
+# Companion reference: infra/azure-example.bicep describes the host, real Cosmos
+# database and separate runtime/GitHub identities. It is not invoked here.
+#
+# Prerequisites (create/configure these yourself, not through this example):
+# - An existing Linux App Service with Python 3.12 and
+#   SCM_DO_BUILD_DURING_DEPLOYMENT=true for installing requirements.txt.
+# - A protected GitHub environment named azure-example, restricted to main.
+# - Environment secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID,
+#   and environment variable AZURE_WEBAPP_NAME; no client secret/publish profile.
+# - OIDC federation subject repo:<owner>/<repo>:environment:azure-example,
+#   with Website Contributor scoped to the target app, not the subscription.
+# - A successful manual run of emulator-ci.yml for this exact main commit.
+# Reference: https://learn.microsoft.com/azure/app-service/deploy-github-actions
+
+name: Azure CD example (mock-up)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azure-cd-example
+  cancel-in-progress: false
+
+jobs:
+  notice:
+    name: Example-only notice
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Explain the example and its limits
+        shell: bash
+        run: |
+          echo "::notice::Mock-up only: Azure sign-in and deployment are disabled."
+          cat >> "$GITHUB_STEP_SUMMARY" <<'NOTICE'
+          ## Azure deployment example only
+          This mock-up illustrates CI-gated packaging, OIDC login and ZIP deployment
+          to an existing Azure App Service. Only this notice runs; the illustrative
+          deployment job is disabled and cannot sign in or deploy.
+
+          Phi/Ollama and the Cosmos emulator belong to local development and CI only.
+          They are not part of the deployment target. A real deployment would use
+          Azure Cosmos DB and a reader-selected Foundry model, with the reader's
+          own endpoints and identity configuration. No model is selected here.
+
+          Companion reference: infra/azure-example.bicep illustrates the host, real
+          Cosmos database and scoped identities. This workflow does not provision it.
+
+          A reader adapting this pattern must provide a cloud-ready application and
+          the prerequisites at the top of this file before changing the disabled guard.
+          The existing emulator CI remains a pre-deployment check, not a cloud runtime.
+          Infrastructure provisioning, model evaluation and production readiness
+          are not demonstrated or validated by this example.
+          NOTICE
+
+  deploy:
+    name: Illustrative App Service deployment (disabled)
+    needs: notice
+    if: ${{ false && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: azure-example
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - name: Check out the selected revision
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Require successful CI for this exact commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow emulator-ci.yml \
+            --commit "$GITHUB_SHA" --event workflow_dispatch --status success \
+            --limit 1 --json databaseId --jq 'length')"
+          if [[ "$count" != "1" ]]; then
+            echo "::error::Run Cosmos emulator CI manually for this exact main commit first."
+            exit 1
+          fi
+
+      - name: Require reader-supplied Azure configuration
+        shell: bash
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+        run: |
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_WEBAPP_NAME; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Configure $name in the azure-example environment."
+              exit 1
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install uv 0.13.0 from Microsoft
+        shell: bash
+        run: |
+          python -m pip install --no-deps \
+            "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/download/uv/0.13/uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+
+      - name: Package tracked application files and locked dependencies
+        shell: bash
+        run: |
+          package="$RUNNER_TEMP/azure-cd-example"
+          mkdir -p "$package"
+          git archive HEAD app | tar -x -C "$package"
+          printf '%s\n' \
+            '--index-url https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/' \
+            > "$package/requirements.txt"
+          uv export --locked --no-dev --no-emit-project --format requirements-txt \
+            >> "$package/requirements.txt"
+          cd "$package"
+          zip -qr "$RUNNER_TEMP/azure-cd-example.zip" app requirements.txt
+
+      - name: Sign in with a federated identity
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy the example ZIP to the existing app
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: ${{ runner.temp }}/azure-cd-example.zip
+          startup-command: uvicorn app.api:app --host 0.0.0.0 --port 8000

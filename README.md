@@ -22,6 +22,19 @@ The dispatch feed adds changing operational data: publish a pickup-bay update,
 then ask the agent where drivers should collect their paperwork. Its answer must
 cite the exact bay and update reference stored in Cosmos DB.
 
+## Azure deployment samples
+
+The [CD workflow](.github/workflows/azure-cd-example.yml) and
+[Bicep template](infra/azure-example.bicep) are **illustrative samples only**, not
+a tested or production-ready Azure deployment. The workflow's deployment job is
+disabled; running it only displays a notice and does not sign in or deploy.
+
+A real deployment would use Azure Cosmos DB and a reader-selected Microsoft
+Foundry model, not the emulator or local Phi/Ollama runtime used in CI. The
+examples do not select or provision a model. The application remains local-only;
+adapt its cloud data/model configuration and supply your own Azure, GitHub and
+identity settings before turning these examples into a working deployment.
+
 ## Open a ready-to-use development environment
 
 If you use GitHub Codespaces, click **Open in Codespaces** above to open a browser
