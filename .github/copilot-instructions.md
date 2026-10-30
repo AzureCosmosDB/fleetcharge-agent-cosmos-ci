@@ -67,7 +67,8 @@ enough to explain alongside the CI workflow.
 
 - Verify the contributor's intended repository and authenticated identity before
   remote operations. Never embed a maintainer's account, token or machine path.
-- Actions uses `pull_request`, supported action release tags and `contents: read`. Do not execute
+- Actions uses `pull_request` and `contents: read`. Pin checkout, Python setup and
+  artifact upload to full-length commit SHAs with release-version comments. Do not execute
   untrusted PR code through `pull_request_target` or add personal tokens.
 - Emulator tests require no Azure credentials. Its public SDK test key does not
   prove authentication; the emulator does not enforce authorization.

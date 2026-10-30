@@ -401,7 +401,8 @@ plus manual dispatch:
 - **Real agent, grounded answers and CRUD:** Ollama, Microsoft Phi-3.5,
   a separate emulator and the actual application test.
 
-CI uses a disposable Ubuntu runner, loopback services, supported action release tags and
+CI uses a disposable Ubuntu runner, loopback services, full-length commit SHA pins
+for checkout, Python setup and artifact upload (with release-version comments), and
 `contents: read`. It needs no Azure subscription, inference API key or repository
 secret. Both jobs fail on incorrect results; configure repository rules to make
 their checks mandatory before merge.
